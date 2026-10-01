@@ -1,0 +1,1 @@
+ALTER TABLE "store_setting" ADD COLUMN "tagline" text;

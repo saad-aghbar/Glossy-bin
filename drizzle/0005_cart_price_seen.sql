@@ -1,0 +1,1 @@
+ALTER TABLE "cart_item" ADD COLUMN "price_seen_minor" integer;

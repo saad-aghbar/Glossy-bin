@@ -1,0 +1,114 @@
+import Link from "next/link";
+import { ProductCard } from "@/components/product-card";
+import { Pagination } from "@/components/pagination";
+import { one, pageCount, parsePagination } from "@/lib/pagination";
+import { getSettings, listActiveBrands, listActiveCategories, listProducts } from "@/server/queries";
+
+export const metadata = { title: "التسوق" };
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const pagination = parsePagination(params, 24);
+  const q = one(params.q).trim();
+  const categorySlug = one(params.category).trim();
+  const brandSlug = one(params.brand).trim();
+  const featuredOnly = one(params.featured) === "1";
+  const newest = one(params.sort) === "new";
+  const [settings, categories, brands, result] = await Promise.all([
+    getSettings(),
+    listActiveCategories(),
+    listActiveBrands(),
+    listProducts({
+      q,
+      categorySlug,
+      brandSlug,
+      featuredOnly,
+      newest,
+      publishedOnly: true,
+      offset: pagination.offset,
+      limit: pagination.pageSize,
+    }),
+  ]);
+  const pages = pageCount(result.total, pagination.pageSize);
+  const filtered = Boolean(q || categorySlug || brandSlug || featuredOnly || newest);
+  const preserved = {
+    ...(q ? { q } : {}),
+    ...(categorySlug ? { category: categorySlug } : {}),
+    ...(brandSlug ? { brand: brandSlug } : {}),
+    ...(featuredOnly ? { featured: "1" } : {}),
+    ...(newest ? { sort: "new" } : {}),
+    pageSize: String(pagination.pageSize),
+  };
+  const from = `/products?${new URLSearchParams(preserved).toString()}`;
+  return (
+    <div className="grid gap-8 py-8">
+      <header className="grid gap-2">
+        <h1 className="m-0 text-4xl font-normal">التسوق</h1>
+        <p className="quiet">{result.total} منتج</p>
+      </header>
+      <form className="grid min-w-0 gap-3 border-b border-line pb-6 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end" method="get">
+        <label className="grid min-w-0 gap-1 md:col-span-2">
+          البحث
+          <input className="field" name="q" defaultValue={q} placeholder="اسم المنتج" />
+        </label>
+        <label className="grid min-w-0 gap-1">
+          التصنيف
+          <select className="select" name="category" defaultValue={categorySlug}>
+            <option value="">كل التصنيفات</option>
+            {categories.map((item) => (
+              <option key={item.id} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-1">
+          العلامة
+          <select className="select" name="brand" defaultValue={brandSlug}>
+            <option value="">كل العلامات</option>
+            {brands.map((item) => (
+              <option key={item.id} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <button className="btn btn-primary" type="submit">
+            تصفية
+          </button>
+          {filtered ? (
+            <Link className="quiet-link" href="/products">
+              مسح التصفية
+            </Link>
+          ) : null}
+        </div>
+      </form>
+      {result.cards.length === 0 ? (
+        <p className="card p-6">لا توجد منتجات مطابقة.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          {result.cards.map((item) => (
+            <ProductCard
+              key={item.id}
+              href={`/products/${item.slug}?from=${encodeURIComponent(from)}`}
+              name={item.name}
+              imageUrl={item.imageUrl}
+              imageAlt={item.imageAlt}
+              meta={[item.brandName, item.categoryName].filter(Boolean).join(" · ")}
+              priceMinor={item.minPriceMinor}
+              currency={settings?.currency ?? "SAR"}
+              minorUnit={settings?.minorUnit ?? 100}
+              inStock={item.inStock}
+            />
+          ))}
+        </div>
+      )}
+      <Pagination page={pagination.page} pages={pages} path="/products" params={preserved} />
+    </div>
+  );
+}
