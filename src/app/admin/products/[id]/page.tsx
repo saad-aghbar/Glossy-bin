@@ -2,12 +2,14 @@ import { asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { brand, category, product, productImage, productVariant } from "@/db/schema";
+import { AdminPage } from "@/components/admin/page";
+import { Check } from "@/components/controls/check";
+import { ChoiceList } from "@/components/controls/choice-list";
 import { BoundForm } from "@/components/bound-form";
-import { ConfirmForm } from "@/components/confirm-form";
 import { FileField } from "@/components/file-field";
-import { PendingButton, PlateImage } from "@/components/ui";
+import { ProductImages } from "@/components/admin/product-images";
 import { ProductForm, draftsFromVariants } from "@/components/product-form";
-import { chooseMainImageAction, deleteImageAction, moveImageAction, setProductVisibilityAction, uploadImageAction } from "@/server/actions/catalog";
+import { setProductVisibilityAction, uploadImageAction } from "@/server/actions/catalog";
 import { getSettings } from "@/server/queries";
 import { one } from "@/lib/pagination";
 import { requireAdminPage } from "@/lib/session";
@@ -39,12 +41,10 @@ export default async function EditProductPage({
   const state = current.archivedAt ? "مؤرشف" : current.isPublished ? "منشور" : "مسودة";
   const error = one(query.error);
   return (
-    <div className="grid gap-6">
-      <h1 className="text-3xl font-extrabold">{current.name}</h1>
-      <p className="text-sm text-muted">الحالة: {state}</p>
+    <AdminPage title={current.name} description={`الحالة: ${state}. الصورة الأولى في الترتيب هي الصورة الرئيسية في المتجر.`}>
       {error === "confirm" ? <p className="alert">أكّدي الإجراء قبل المتابعة.</p> : null}
       {error === "state" ? <p className="alert">حالة غير صالحة.</p> : null}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="admin-actions">
         <form action={setProductVisibilityAction}>
           <input type="hidden" name="id" value={current.id} />
           <input type="hidden" name="visibility" value="draft" />
@@ -62,10 +62,7 @@ export default async function EditProductPage({
         <form action={setProductVisibilityAction} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="id" value={current.id} />
           <input type="hidden" name="visibility" value="archived" />
-          <label className="flex items-center gap-2 text-sm">
-            <input name="confirmArchive" type="checkbox" value="yes" required />
-            أؤكد الأرشفة
-          </label>
+          <Check name="confirmArchive" value="yes" required>أؤكد الأرشفة</Check>
           <button className="btn btn-ghost" type="submit">
             أرشفة
           </button>
@@ -80,47 +77,13 @@ export default async function EditProductPage({
       />
       <section className="grid gap-3">
         <h2 className="text-xl font-bold">الصور</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {images.map((image, index) => (
-            <figure key={image.id} className="card grid gap-2 overflow-hidden p-2">
-              <PlateImage src={image.url} alt={image.alt || current.name} className="aspect-square w-full object-cover" />
-              <p className="text-sm text-muted">{index === 0 ? "الصورة الرئيسية" : image.alt}</p>
-              <div className="flex flex-wrap gap-2">
-                {index === 0 ? null : (
-                  <form action={chooseMainImageAction}>
-                    <input type="hidden" name="id" value={image.id} />
-                    <button className="btn btn-ghost" type="submit">
-                      صورة رئيسية
-                    </button>
-                  </form>
-                )}
-                {index === 0 ? null : (
-                  <form action={moveImageAction}>
-                    <input type="hidden" name="id" value={image.id} />
-                    <input type="hidden" name="direction" value="earlier" />
-                    <button className="btn btn-ghost" type="submit">
-                      تقديم
-                    </button>
-                  </form>
-                )}
-                {index === images.length - 1 ? null : (
-                  <form action={moveImageAction}>
-                    <input type="hidden" name="id" value={image.id} />
-                    <input type="hidden" name="direction" value="later" />
-                    <button className="btn btn-ghost" type="submit">
-                      تأخير
-                    </button>
-                  </form>
-                )}
-              </div>
-              <ConfirmForm action={deleteImageAction} message="حذف هذه الصورة؟">
-                <input type="hidden" name="id" value={image.id} />
-                <input type="hidden" name="confirmDelete" value="yes" />
-                <PendingButton>حذف</PendingButton>
-              </ConfirmForm>
-            </figure>
-          ))}
-        </div>
+        <p className="admin-note">اسحبي الصورة لتغيير ترتيبها، أو استخدمي تقديم وتأخير. الأولى هي الصورة الرئيسية.</p>
+        <ProductImages
+          key={images.map((image) => `${image.id}:${image.sortOrder}`).join("|")}
+          productId={current.id}
+          productName={current.name}
+          images={images.map((image) => ({ id: image.id, url: image.url, alt: image.alt }))}
+        />
         <BoundForm action={uploadImageAction} submit="رفع الصورة" cancelHref="/admin/products">
           <input type="hidden" name="productId" value={current.id} />
           <input type="hidden" name="productName" value={current.name} />
@@ -130,14 +93,7 @@ export default async function EditProductPage({
           </label>
           <label className="grid gap-1">
             الخيار
-            <select className="select" name="variantId" defaultValue="">
-              <option value="">لكل الخيارات</option>
-              {variants.map((variant) => (
-                <option key={variant.id} value={variant.id}>
-                  {variant.sku}
-                </option>
-              ))}
-            </select>
+            <ChoiceList name="variantId" defaultValue="" placeholder="لكل الخيارات" options={[{ value: "", label: "لكل الخيارات" }, ...variants.map((variant) => ({ value: variant.id, label: variant.sku }))]} />
           </label>
           <div className="grid gap-1">
             الملف
@@ -145,6 +101,6 @@ export default async function EditProductPage({
           </div>
         </BoundForm>
       </section>
-    </div>
+    </AdminPage>
   );
 }

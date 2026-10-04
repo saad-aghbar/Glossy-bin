@@ -1,6 +1,9 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { offer } from "@/db/schema";
+import { AdminPage } from "@/components/admin/page";
+import { Check } from "@/components/controls/check";
+import { Stepper } from "@/components/controls/stepper";
 import { BoundForm } from "@/components/bound-form";
 import { InstantFields } from "@/components/date-fields";
 import { FileField } from "@/components/file-field";
@@ -12,6 +15,14 @@ import { requireAdminPage } from "@/lib/session";
 
 export const metadata = { title: "العروض" };
 
+function offerState(row: { isActive: boolean; startsAt: Date | null; endsAt: Date | null }) {
+  const now = Date.now();
+  if (!row.isActive) return "متوقف";
+  if (row.startsAt && row.startsAt.getTime() > now) return "مجدول";
+  if (row.endsAt && row.endsAt.getTime() < now) return "منتهٍ";
+  return "ظاهر الآن";
+}
+
 export default async function OffersPage({
   searchParams,
 }: {
@@ -22,12 +33,15 @@ export default async function OffersPage({
   const rows = await db.select().from(offer).orderBy(asc(offer.sortOrder));
   const editing = rows.find((row) => row.id === one(params.id));
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <section className="grid gap-2">
-        <h1 className="text-3xl font-extrabold">العروض</h1>
+    <AdminPage title="العروض" description="يظهر العرض النشط ضمن مدته في الصفحة الرئيسية. الرابط يجب أن يبقى داخل المتجر.">
+    <div className="admin-split">
+      <section className="admin-list">
         {rows.map((row) => (
-          <article key={row.id} className="card flex items-center justify-between gap-3 p-3">
-            <a href={`/admin/offers?id=${row.id}`}>{row.title}</a>
+          <article key={row.id} className={editing?.id === row.id ? "card is-current flex items-center justify-between gap-3 p-3" : "card flex items-center justify-between gap-3 p-3"}>
+            <a href={`/admin/offers?id=${row.id}`}>
+              {row.title}
+              <span className="block text-sm text-muted">{offerState(row)}</span>
+            </a>
             <ConfirmForm action={deleteOfferAction} message="حذف هذا العرض؟">
               <input type="hidden" name="id" value={row.id} />
               <PendingButton>حذف</PendingButton>
@@ -54,17 +68,21 @@ export default async function OffersPage({
         <InstantFields name="endsAt" label="ينتهي" value={editing?.endsAt ?? null} />
         <label className="grid gap-1">
           ترتيب العرض
-          <input className="field" name="sortOrder" type="number" defaultValue={editing?.sortOrder ?? 0} />
+          <Stepper name="sortOrder" defaultValue={editing?.sortOrder ?? 0} label="ترتيب العرض" />
         </label>
         <div className="grid gap-1">
           الصورة
           <FileField name="image" accept="image/jpeg,image/png,image/webp" />
         </div>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="isActive" defaultChecked={editing?.isActive ?? true} />
-          نشط
-        </label>
+        <Check name="isActive" defaultChecked={editing?.isActive ?? true}>نشط</Check>
+        <aside className="admin-surface grid gap-2 p-4">
+          <p className="admin-note">معاينة مكان الظهور في الصفحة الرئيسية</p>
+          <h3 className="m-0 text-2xl font-medium">{editing?.title || "عنوان العرض"}</h3>
+          {editing?.description ? <p className="admin-note">{editing.description}</p> : null}
+          <span>شاهدي</span>
+        </aside>
       </BoundForm>
     </div>
+    </AdminPage>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ConfirmForm } from "@/components/confirm-form";
+import { Stepper } from "@/components/controls/stepper";
 import { PendingButton } from "@/components/ui";
 import { removeCartAction, updateCartAction } from "@/server/actions/cart";
 import { describeCartLine } from "@/lib/cart-lines";
@@ -64,7 +65,7 @@ export default async function CartPage({
                 {status.messages.some((message) => message.startsWith("لم يعد")) ? null : (
                   <form action={updateCartAction} className="flex items-center gap-2">
                     <input type="hidden" name="itemId" value={item.id} />
-                    <input className="field w-20" name="qty" type="number" min={1} max={99} defaultValue={item.qty} aria-label="الكمية" />
+                    <Stepper name="qty" defaultValue={item.qty} min={1} max={99} label="الكمية" />
                     <PendingButton>تحديث</PendingButton>
                   </form>
                 )}

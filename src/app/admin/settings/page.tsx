@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { AdminPage } from "@/components/admin/page";
+import { Check } from "@/components/controls/check";
 import { BoundForm } from "@/components/bound-form";
 import { FileField } from "@/components/file-field";
 import { saveSettingsAction } from "@/server/actions/admin";
@@ -10,10 +13,15 @@ export default async function SettingsPage() {
   await requireAdminPage();
   const settings = await getSettings();
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-extrabold">إعدادات المتجر</h1>
-      <p className="text-sm text-muted">الحقول الفارغة لا تظهر في المتجر. رسوم التوصيل تُحدد من مناطق التوصيل.</p>
+    <AdminPage title="إعدادات المتجر" description="الحقول الفارغة لا تظهر في المتجر. الشعار النصي الفارغ يبقى فارغًا. رسوم التوصيل من مناطق التوصيل وليست هنا." width="narrow">
+      <nav className="flex flex-wrap gap-3 text-sm" aria-label="أقسام الإعدادات">
+        <a href="#identity">الهوية</a>
+        <a href="#contact">التواصل</a>
+        <a href="#payment">الدفع</a>
+        <Link href="/admin/delivery">مناطق التوصيل</Link>
+      </nav>
       <BoundForm action={saveSettingsAction} submit="حفظ الإعدادات" cancelHref="/admin">
+        <h2 id="identity" className="m-0 text-lg font-medium">الهوية</h2>
         <label className="grid gap-1">
           اسم المتجر
           <input className="field" name="storeName" defaultValue={settings?.storeName ?? ""} required />
@@ -27,10 +35,11 @@ export default async function SettingsPage() {
           <FileField name="logo" accept="image/jpeg,image/png,image/webp" />
         </div>
         {settings?.logoUrl ? (
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="removeLogo" value="yes" />
-            إزالة الشعار المصوّر
-          </label>
+          <div className="grid gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={settings.logoUrl} alt="" className="h-16 w-auto object-contain" />
+            <Check name="removeLogo" value="yes">إزالة الشعار المصوّر</Check>
+          </div>
         ) : null}
         <label className="grid gap-1">
           العملة
@@ -40,6 +49,7 @@ export default async function SettingsPage() {
           وحدة العملة الصغرى
           <input className="field" name="minorUnit" defaultValue={settings?.minorUnit ?? 100} required />
         </label>
+        <h2 id="contact" className="m-0 text-lg font-medium">التواصل</h2>
         <label className="grid gap-1">
           واتساب
           <input className="field" name="whatsappUrl" defaultValue={settings?.whatsappUrl ?? ""} placeholder="https://wa.me/..." />
@@ -61,19 +71,15 @@ export default async function SettingsPage() {
           <input className="field" name="orderNotifyEmail" type="email" defaultValue={settings?.orderNotifyEmail ?? ""} />
           <span className="text-sm text-muted">لا يظهر في المتجر.</span>
         </label>
+        <h2 id="payment" className="m-0 text-lg font-medium">الدفع</h2>
+        <p className="admin-note">العملة المعروضة هنا هي رمز المتجر المحفوظ ({settings?.currency ?? "SAR"}). مبالغ الطلبات القديمة تبقى بعملة كل طلب ولا تُحوَّل.</p>
         <label className="grid gap-1">
           تعليمات التحويل
           <textarea className="field" name="bankInstructions" defaultValue={settings?.bankInstructions ?? ""} rows={4} />
         </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="codEnabled" defaultChecked={settings?.codEnabled ?? true} />
-          الدفع عند الاستلام
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="bankTransferEnabled" defaultChecked={settings?.bankTransferEnabled ?? true} />
-          التحويل البنكي
-        </label>
+        <Check name="codEnabled" defaultChecked={settings?.codEnabled ?? true}>الدفع عند الاستلام</Check>
+        <Check name="bankTransferEnabled" defaultChecked={settings?.bankTransferEnabled ?? true}>التحويل البنكي</Check>
       </BoundForm>
-    </div>
+    </AdminPage>
   );
 }

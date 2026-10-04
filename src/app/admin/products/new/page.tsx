@@ -1,6 +1,7 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { brand, category } from "@/db/schema";
+import { AdminPage } from "@/components/admin/page";
 import { ProductForm } from "@/components/product-form";
 import { getSettings } from "@/server/queries";
 import { requireAdminPage } from "@/lib/session";
@@ -15,9 +16,8 @@ export default async function NewProductPage() {
     db.select().from(brand).orderBy(asc(brand.sortOrder)),
   ]);
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-extrabold">منتج جديد</h1>
+    <AdminPage title="منتج جديد" description="احفظي المنتج أولًا، ثم أضيفي الصور من صفحة التعديل. الصورة الأولى تصبح الصورة الرئيسية." width="narrow">
       <ProductForm categories={categories} brands={brands} variants={[]} minorUnit={settings?.minorUnit ?? 100} />
-    </div>
+    </AdminPage>
   );
 }

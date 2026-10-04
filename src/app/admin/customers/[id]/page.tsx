@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdminPage } from "@/components/admin/page";
 import { banCustomerAction } from "@/server/actions/admin";
 import { formatMinor } from "@/lib/money";
 import { getCustomer, getSettings } from "@/server/queries";
@@ -11,8 +12,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const [customer, settings] = await Promise.all([getCustomer(id), getSettings()]);
   if (!customer || !settings) notFound();
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-extrabold">{customer.user.name}</h1>
+    <AdminPage title={customer.user.name} description="بيانات الحساب والطلبات المرتبطة به. لا تُعرض بيانات الدخول." width="narrow">
       <p>
         {customer.user.email} · {customer.user.phone || "بدون هاتف"}
       </p>
@@ -31,6 +31,6 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
           <span>{formatMinor(order.totalMinor, settings.currency, settings.minorUnit)}</span>
         </Link>
       ))}
-    </div>
+    </AdminPage>
   );
 }

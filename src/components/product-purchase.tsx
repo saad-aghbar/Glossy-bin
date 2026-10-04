@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useActionState } from "react";
+import { Stepper } from "@/components/controls/stepper";
 import { PlateImage, RosePlate } from "@/components/ui";
 import { formatMinor } from "@/lib/money";
 import { variantLabel } from "@/lib/labels";
@@ -42,6 +43,8 @@ export function ProductPurchase({
   minorUnit: number;
 }) {
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
+  const [galleryVariantId, setGalleryVariantId] = useState(variants[0]?.id ?? "");
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [state, action, pending] = useActionState(addToCartAction, null);
   const variant = variants.find((item) => item.id === variantId) ?? variants[0];
   const shades = useMemo(
@@ -59,6 +62,12 @@ export function ProductPurchase({
     const shared = images.filter((image) => !image.variantId);
     return shared.length ? shared : images;
   }, [images, variant]);
+
+  if (variant && galleryVariantId !== variant.id) {
+    setGalleryVariantId(variant.id);
+    setActiveId(null);
+  }
+  const active = gallery.find((image) => image.id === activeId) ?? gallery[0];
 
   if (!variant) return <p>هذا المنتج لا يملك خيارات متاحة.</p>;
 
@@ -83,15 +92,24 @@ export function ProductPurchase({
   return (
     <div className="grid items-start gap-8 py-8 md:grid-cols-2 md:gap-16">
       <div className="grid gap-2">
-        {gallery[0] ? (
-          <PlateImage key={gallery[0].url} src={gallery[0].url} alt={gallery[0].alt || name} photo />
+        {active ? (
+          <PlateImage key={active.url} src={active.url} alt={active.alt || name} photo />
         ) : (
           <RosePlate name={name} />
         )}
         {gallery.length > 1 ? (
-          <div className="grid grid-cols-4 gap-2">
-            {gallery.slice(1).map((image) => (
-              <PlateImage key={image.id} src={image.url} alt={image.alt || name} className="plate object-cover" />
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="صور المنتج">
+            {gallery.map((image) => (
+              <button
+                key={image.id}
+                type="button"
+                className="gallery-thumb"
+                aria-pressed={image.id === active?.id}
+                aria-label={image.alt || name}
+                onClick={() => setActiveId(image.id)}
+              >
+                <PlateImage src={image.url} alt="" className="plate w-full object-cover" />
+              </button>
             ))}
           </div>
         ) : null}
@@ -155,7 +173,7 @@ export function ProductPurchase({
         ) : null}
         <label className="grid max-w-28 gap-1">
           <span className="quiet">الكمية</span>
-          <input className="field" name="qty" type="number" min={1} max={Math.max(1, variant.stockQty)} defaultValue={1} />
+          <Stepper name="qty" defaultValue={1} min={1} max={Math.max(1, variant.stockQty)} label="الكمية" />
         </label>
         {state?.error ? (
           <p className="alert" role="alert">

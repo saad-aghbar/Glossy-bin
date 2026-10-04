@@ -1,4 +1,7 @@
 import { notFound } from "next/navigation";
+import { AdminPage } from "@/components/admin/page";
+import { Check } from "@/components/controls/check";
+import { ChoiceList } from "@/components/controls/choice-list";
 import { BoundForm } from "@/components/bound-form";
 import { addOrderNoteAction, recordPaymentReceivedAction, updateOrderAction } from "@/server/actions/admin";
 import {
@@ -29,7 +32,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   const status = isOrderStatus(order.status) ? order.status : "pending";
   const choices = orderStatusChoices(status, order.paymentStatus);
   const blocked = isOrderStatus(order.status) ? cancelBlockedMessage(order.status, order.paymentStatus) : null;
-  const money = (amount: number) => formatMinor(amount, settings.currency, settings.minorUnit);
+  const money = (amount: number) => formatMinor(amount, order.currency, settings.minorUnit);
   const canRecord =
     (method === "cod" || method === "bank_transfer") &&
     order.paymentStatus !== "paid" &&
@@ -38,9 +41,16 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   const notes = events.filter((event) => event.kind === "note");
   const changes = events.filter((event) => event.kind === "status");
   return (
+    <AdminPage
+      title={order.number}
+      description={
+        order.currency === settings.currency
+          ? "التوصيل والدفع إجراءان منفصلان. تسجيل الدفع لا ينفّذ استردادًا."
+          : `عملة هذا الطلب ${order.currency} وتختلف عن عملة المتجر الحالية ${settings.currency}. المبالغ تبقى كما حُفظت.`
+      }
+    >
     <article className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-      <section className="card grid gap-3 p-4">
-        <h1 className="text-2xl font-extrabold">{order.number}</h1>
+      <section className="admin-surface grid gap-3 p-4">
         <div>
           <h2 className="font-bold">بيانات الزبونة</h2>
           <p>
@@ -87,13 +97,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             <input type="hidden" name="id" value={order.id} />
             <label className="grid gap-1">
               حالة الطلب
-              <select className="select" name="status" defaultValue={order.status}>
-                {choices.map((value) => (
-                  <option key={value} value={value}>
-                    {orderStatusLabel[value]}
-                  </option>
-                ))}
-              </select>
+              <ChoiceList name="status" defaultValue={order.status} options={choices.map((value) => ({ value, label: orderStatusLabel[value] }))} />
             </label>
             <p className="text-sm text-muted">الحالية: {orderStatusLabel[status]}</p>
           </BoundForm>
@@ -127,12 +131,17 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
           {canRecord ? (
             <BoundForm action={recordPaymentReceivedAction} submit="تم استلام المبلغ">
               <input type="hidden" name="id" value={order.id} />
-              <label className="flex items-start gap-2 text-sm">
-                <input className="mt-1" name="confirmPayment" type="checkbox" value="yes" required />
-                <span>أؤكد أن المبلغ وصل نقداً أو بالتحويل البنكي</span>
-              </label>
+              <Check name="confirmPayment" value="yes" required>أؤكد أن المبلغ وصل نقداً أو بالتحويل البنكي</Check>
             </BoundForm>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted">
+              {order.paymentStatus === "paid"
+                ? "المبلغ مسجّل. هذا ليس استردادًا، والتطبيق لا يعيد المال."
+                : order.status === "cancelled"
+                  ? "الطلب ملغى، لذلك لا يُسجَّل دفع جديد."
+                  : "تسجيل الاستلام متاح للدفع عند الاستلام والتحويل البنكي فقط."}
+            </p>
+          )}
         </section>
         <section className="card grid gap-3 p-4">
           <h2 className="font-bold">ملاحظات داخلية</h2>
@@ -158,5 +167,6 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
         </section>
       </div>
     </article>
+    </AdminPage>
   );
 }

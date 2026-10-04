@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AdminNav } from "@/components/admin-nav";
+import { AdminShell } from "@/components/admin/shell";
 import { isAdminRole } from "@/lib/access";
 import { getCurrentUser } from "@/lib/session";
 
@@ -7,12 +7,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getCurrentUser();
   if (!user) redirect("/account/login?next=/admin");
   if (!isAdminRole(user.role)) {
-    return <p className="alert">هذه الصفحات للمسؤولة فقط.</p>;
+    return (
+      <div className="admin-denied">
+        <p className="alert">هذه الصفحات للمسؤولة فقط.</p>
+      </div>
+    );
   }
-  return (
-    <div className="grid gap-6">
-      <AdminNav />
-      {children}
-    </div>
-  );
+  return <AdminShell name={user.name}>{children}</AdminShell>;
 }

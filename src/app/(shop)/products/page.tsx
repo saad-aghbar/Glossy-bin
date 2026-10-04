@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChoiceList } from "@/components/controls/choice-list";
 import { ProductCard } from "@/components/product-card";
 import { Pagination } from "@/components/pagination";
 import { one, pageCount, parsePagination } from "@/lib/pagination";
@@ -57,25 +58,11 @@ export default async function ProductsPage({
         </label>
         <label className="grid min-w-0 gap-1">
           التصنيف
-          <select className="select" name="category" defaultValue={categorySlug}>
-            <option value="">كل التصنيفات</option>
-            {categories.map((item) => (
-              <option key={item.id} value={item.slug}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          <ChoiceList name="category" defaultValue={categorySlug} placeholder="كل التصنيفات" options={[{ value: "", label: "كل التصنيفات" }, ...categories.map((item) => ({ value: item.slug, label: item.name }))]} />
         </label>
         <label className="grid min-w-0 gap-1">
           العلامة
-          <select className="select" name="brand" defaultValue={brandSlug}>
-            <option value="">كل العلامات</option>
-            {brands.map((item) => (
-              <option key={item.id} value={item.slug}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          <ChoiceList name="brand" defaultValue={brandSlug} placeholder="كل العلامات" options={[{ value: "", label: "كل العلامات" }, ...brands.map((item) => ({ value: item.slug, label: item.name }))]} />
         </label>
         <div className="flex flex-wrap items-center gap-4">
           <button className="btn btn-primary" type="submit">

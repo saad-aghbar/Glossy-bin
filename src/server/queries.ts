@@ -295,15 +295,27 @@ export async function salesSummary(range?: OrderRange) {
     .select({
       id: customerOrder.id,
       number: customerOrder.number,
+      recipientName: customerOrder.recipientName,
       status: customerOrder.status,
       paymentStatus: customerOrder.paymentStatus,
+      paymentMethod: customerOrder.paymentMethod,
       totalMinor: customerOrder.totalMinor,
+      createdAt: customerOrder.createdAt,
     })
     .from(customerOrder)
     .where(where)
     .orderBy(desc(customerOrder.createdAt))
     .limit(8);
-  return { totals, byStatus, recent };
+  const revenueDays = await db
+    .select({
+      day: sql<string>`to_char(${customerOrder.createdAt} at time zone 'Asia/Jerusalem', 'YYYY-MM-DD')`,
+      revenueMinor: sql<number>`coalesce(sum(${customerOrder.totalMinor}) filter (where ${customerOrder.status} <> 'cancelled' and ${customerOrder.paymentStatus} = 'paid'), 0)::int`,
+    })
+    .from(customerOrder)
+    .where(where)
+    .groupBy(sql`1`)
+    .orderBy(sql`1`);
+  return { totals, byStatus, recent, revenueDays };
 }
 
 export type AdminOrderFilters = {
@@ -346,8 +358,11 @@ export async function listAdminOrders(filters: AdminOrderFilters, offset: number
     .select({
       id: customerOrder.id,
       number: customerOrder.number,
+      recipientName: customerOrder.recipientName,
+      createdAt: customerOrder.createdAt,
       status: customerOrder.status,
       paymentStatus: customerOrder.paymentStatus,
+      paymentMethod: customerOrder.paymentMethod,
       totalMinor: customerOrder.totalMinor,
       currency: customerOrder.currency,
     })
@@ -374,6 +389,30 @@ export async function getAdminOrder(id: string) {
   });
 }
 
+export async function lowStockProducts(limit = 6) {
+  const rows = await db
+    .select({
+      productId: product.id,
+      name: product.name,
+      sku: productVariant.sku,
+      stockQty: productVariant.stockQty,
+      imageUrl: productImage.url,
+    })
+    .from(productVariant)
+    .innerJoin(product, eq(product.id, productVariant.productId))
+    .leftJoin(productImage, eq(productImage.productId, product.id))
+    .where(and(eq(productVariant.isActive, true), lte(productVariant.stockQty, 3), isNull(product.archivedAt)))
+    .orderBy(asc(productVariant.stockQty), asc(product.name))
+    .limit(limit);
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const key = `${row.productId}:${row.sku}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function listCustomers(q: string, offset: number, limit: number) {
   const where = q
     ? and(eq(user.role, "user"), or(ilike(user.name, `%${q.replace(/[%_\\]/g, "")}%`), ilike(user.email, `%${q.replace(/[%_\\]/g, "")}%`)))
@@ -385,6 +424,8 @@ export async function listCustomers(q: string, offset: number, limit: number) {
       email: user.email,
       phone: user.phone,
       banned: user.banned,
+      orderCount: sql<number>`(select count(*)::int from ${customerOrder} where ${customerOrder.userId} = ${user.id})`,
+      paidMinor: sql<number>`(select coalesce(sum(${customerOrder.totalMinor}), 0)::int from ${customerOrder} where ${customerOrder.userId} = ${user.id} and ${customerOrder.paymentStatus} = 'paid' and ${customerOrder.status} <> 'cancelled')`,
     })
     .from(user)
     .where(where)

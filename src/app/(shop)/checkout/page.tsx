@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { CheckoutForm } from "@/components/checkout-form";
+import { ChoiceList } from "@/components/controls/choice-list";
 import { formatMinor } from "@/lib/money";
 import { paymentMethodLabel } from "@/lib/labels";
 import { one } from "@/lib/pagination";
@@ -56,13 +57,12 @@ export default async function CheckoutPage({
         <form className="card grid gap-3 p-4 md:grid-cols-2" method="get">
           <label className="grid gap-1">
             منطقة التوصيل
-            <select className="select" name="zone" defaultValue={quote.zone?.id ?? ""}>
-              {quote.zones.map((zone) => (
-                <option key={zone.id} value={zone.id}>
-                  {zone.name} — {formatMinor(zone.feeMinor, currency, minorUnit)}
-                </option>
-              ))}
-            </select>
+            <ChoiceList
+              name="zone"
+              defaultValue={quote.zone?.id ?? ""}
+              placeholder="اختاري المنطقة"
+              options={quote.zones.map((zone) => ({ value: zone.id, label: `${zone.name} — ${formatMinor(zone.feeMinor, currency, minorUnit)}` }))}
+            />
           </label>
           <label className="grid gap-1">
             رمز الخصم

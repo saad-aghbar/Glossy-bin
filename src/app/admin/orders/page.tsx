@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AdminPage } from "@/components/admin/page";
+import { ChoiceList } from "@/components/controls/choice-list";
 import { DayFields } from "@/components/date-fields";
 import { Pagination } from "@/components/pagination";
 import {
@@ -6,6 +8,7 @@ import {
   paymentMethodLabel,
   paymentStatusLabel,
   type OrderStatus,
+  type PaymentMethod,
   type PaymentStatus,
 } from "@/lib/labels";
 import { resolveDay } from "@/lib/dates";
@@ -55,45 +58,29 @@ export default async function AdminOrdersPage({
     }).filter(([, value]) => value),
   );
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-extrabold">الطلبات</h1>
-      <form className="grid gap-3 md:grid-cols-2" method="get">
+    <AdminPage title="الطلبات" description="متابعة التوصيل والدفع بشكل منفصل. المبالغ تُعرض بعملة الطلب المحفوظة.">
+      <div className="flex flex-wrap gap-2">
+        <Link href="/admin/orders">الكل</Link>
+        {Object.entries(orderStatusLabel).map(([value, label]) => (
+          <Link key={value} href={`/admin/orders?status=${value}`}>{label}</Link>
+        ))}
+      </div>
+      <form className="admin-surface grid gap-3 p-4 md:grid-cols-2" method="get">
         <label className="grid gap-1">
           بحث برقم الطلب أو الاسم أو البريد
           <input className="field" name="q" defaultValue={q} />
         </label>
         <label className="grid gap-1">
           حالة التوصيل
-          <select className="select" name="status" defaultValue={status}>
-            <option value="">كل الحالات</option>
-            {Object.entries(orderStatusLabel).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <ChoiceList name="status" defaultValue={status} placeholder="كل الحالات" options={[{ value: "", label: "كل الحالات" }, ...Object.entries(orderStatusLabel).map(([value, label]) => ({ value, label }))]} />
         </label>
         <label className="grid gap-1">
           حالة الدفع
-          <select className="select" name="paymentStatus" defaultValue={paymentStatus}>
-            <option value="">كل حالات الدفع</option>
-            {Object.entries(paymentStatusLabel).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <ChoiceList name="paymentStatus" defaultValue={paymentStatus} placeholder="كل حالات الدفع" options={[{ value: "", label: "كل حالات الدفع" }, ...Object.entries(paymentStatusLabel).map(([value, label]) => ({ value, label }))]} />
         </label>
         <label className="grid gap-1">
           طريقة الدفع
-          <select className="select" name="paymentMethod" defaultValue={paymentMethod}>
-            <option value="">كل الطرق</option>
-            {Object.entries(paymentMethodLabel).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <ChoiceList name="paymentMethod" defaultValue={paymentMethod} placeholder="كل الطرق" options={[{ value: "", label: "كل الطرق" }, ...Object.entries(paymentMethodLabel).map(([value, label]) => ({ value, label }))]} />
         </label>
         <DayFields name="from" label="من تاريخ" value={fromText === "invalid" ? "" : fromText} />
         <DayFields name="to" label="إلى تاريخ" value={toText === "invalid" ? "" : toText} />
@@ -105,47 +92,51 @@ export default async function AdminOrdersPage({
       </form>
       {invalidDay ? <p className="alert">التاريخ غير صالح.</p> : null}
       {inverted ? <p className="alert">تاريخ البداية بعد تاريخ النهاية.</p> : null}
-      {result.rows.length === 0 ? <p>لا توجد طلبات مطابقة.</p> : null}
-      <div className="list-cards grid gap-2">
+      {result.rows.length === 0 ? <p className="admin-surface p-4">لا توجد طلبات مطابقة.</p> : null}
+      <div className="grid gap-2 md:hidden">
         {result.rows.map((order) => (
-          <Link key={order.id} href={`/admin/orders/${order.id}`} className="card grid gap-1 p-3">
-            <span className="font-bold">{order.number}</span>
-            <span>التوصيل: {orderStatusLabel[order.status as OrderStatus] ?? order.status}</span>
-            <span>الدفع: {paymentStatusLabel[order.paymentStatus as PaymentStatus] ?? order.paymentStatus}</span>
-            <span>{formatMinor(order.totalMinor, settings?.currency ?? order.currency, settings?.minorUnit ?? 100)}</span>
-          </Link>
+          <article key={order.id} className="admin-surface grid gap-1 p-3">
+            <Link className="font-medium" href={`/admin/orders/${order.id}`}>{order.number}</Link>
+            <p>{order.recipientName}</p>
+            <p className="admin-note">{order.createdAt.toLocaleDateString("ar")} · {formatMinor(order.totalMinor, order.currency, settings?.minorUnit ?? 100)}</p>
+            <p className="admin-note">{paymentStatusLabel[order.paymentStatus as PaymentStatus] ?? order.paymentStatus} · {orderStatusLabel[order.status as OrderStatus] ?? order.status}</p>
+          </article>
         ))}
       </div>
-      <table className="data-table">
+      <div className="admin-surface hidden overflow-auto md:block">
+      <table className="data-table" style={{ display: "table" }}>
         <thead>
           <tr>
             <th>الطلب</th>
-            <th>التوصيل</th>
-            <th>الدفع</th>
+            <th>الزبون</th>
+            <th>التاريخ</th>
             <th>المبلغ</th>
+            <th>طريقة الدفع</th>
+            <th>حالة الدفع</th>
+            <th>التوصيل</th>
           </tr>
         </thead>
         <tbody>
           {result.rows.map((order) => (
             <tr key={order.id}>
-              <td>
-                <Link className="font-bold" href={`/admin/orders/${order.id}`}>
-                  {order.number}
-                </Link>
-              </td>
-              <td>{orderStatusLabel[order.status as OrderStatus] ?? order.status}</td>
+              <td><Link href={`/admin/orders/${order.id}`}>{order.number}</Link></td>
+              <td>{order.recipientName}</td>
+              <td>{order.createdAt.toLocaleDateString("ar")}</td>
+              <td>{formatMinor(order.totalMinor, order.currency, settings?.minorUnit ?? 100)}</td>
+              <td>{paymentMethodLabel[order.paymentMethod as PaymentMethod] ?? order.paymentMethod}</td>
               <td>{paymentStatusLabel[order.paymentStatus as PaymentStatus] ?? order.paymentStatus}</td>
-              <td>{formatMinor(order.totalMinor, settings?.currency ?? order.currency, settings?.minorUnit ?? 100)}</td>
+              <td>{orderStatusLabel[order.status as OrderStatus] ?? order.status}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
       <Pagination
         page={pagination.page}
         pages={pageCount(result.total, pagination.pageSize)}
         path="/admin/orders"
         params={preserved}
       />
-    </div>
+    </AdminPage>
   );
 }

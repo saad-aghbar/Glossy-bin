@@ -303,7 +303,7 @@ export async function uploadImageAction(_state: ActionState, formData: FormData)
       variantId: field(formData, "variantId") || null,
       url,
       alt: field(formData, "alt") || field(formData, "productName"),
-      sortOrder: (last?.sortOrder ?? 0) + 1,
+      sortOrder: last ? last.sortOrder + 1 : 0,
     });
   } catch (error) {
     return { error: actionError(error, "تعذر رفع الصورة") };
@@ -379,6 +379,22 @@ export async function moveImageAction(formData: FormData) {
   await moveProductImage(id, direction);
   revalidateCatalog();
   if (image) redirect(`/admin/products/${image.productId}`);
+}
+
+export async function reorderImagesAction(formData: FormData) {
+  await requireAdmin();
+  const productId = field(formData, "productId");
+  const ids = formData.getAll("imageId").map((value) => String(value));
+  const images = await orderedImages(productId);
+  const known = new Set(images.map((item) => item.id));
+  if (ids.length !== images.length || new Set(ids).size !== ids.length || ids.some((id) => !known.has(id))) return;
+  await db.transaction(async (tx) => {
+    for (const [order, id] of ids.entries()) {
+      await tx.update(productImage).set({ sortOrder: order }).where(eq(productImage.id, id));
+    }
+  });
+  revalidateCatalog();
+  redirect(`/admin/products/${productId}`);
 }
 
 export async function saveCategoryAction(_state: ActionState, formData: FormData): Promise<ActionState> {

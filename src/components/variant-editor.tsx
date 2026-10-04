@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@/components/controls/check";
+import { Stepper } from "@/components/controls/stepper";
 
 export type VariantDraft = {
   key: string;
@@ -35,7 +37,7 @@ export function VariantEditor({ initial }: { initial: VariantDraft[] }) {
   return (
     <div className="grid gap-3">
       {rows.map((row, index) => (
-        <fieldset key={row.key} className="grid gap-2 rounded-2xl border border-line p-3 md:grid-cols-4">
+        <fieldset key={row.key} className="variant-card">
           <legend className="px-1 font-bold">خيار {index + 1}</legend>
           <input type="hidden" name="variantId" value={row.id} />
           <input type="hidden" name="variantActive" value={row.active} />
@@ -62,16 +64,11 @@ export function VariantEditor({ initial }: { initial: VariantDraft[] }) {
           </label>
           <label className="grid gap-1 text-sm">
             المخزون
-            <input className="field" name="variantStock" inputMode="numeric" value={row.stock} required onChange={(event) => update(row.key, { stock: event.target.value })} />
+            <Stepper name="variantStock" value={row.stock} onValue={(stock) => update(row.key, { stock })} min={0} label="المخزون" />
           </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={row.active === "1"}
-              onChange={(event) => update(row.key, { active: event.target.checked ? "1" : "0" })}
-            />
+          <Check checked={row.active === "1"} onChecked={(value) => update(row.key, { active: value ? "1" : "0" })}>
             متاح للبيع
-          </label>
+          </Check>
           {rows.length > 1 ? (
             <button type="button" className="btn btn-ghost" onClick={() => setRows((current) => current.filter((item) => item.key !== row.key))}>
               حذف الخيار
