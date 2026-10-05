@@ -44,3 +44,29 @@ export function Check({
     </label>
   );
 }
+
+export function Radio({
+  name,
+  value,
+  checked = false,
+  onChecked,
+  children,
+}: {
+  name: string;
+  value: string;
+  checked?: boolean;
+  onChecked?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className="check">
+      <input type="radio" name={name} value={value} checked={checked} onChange={() => onChecked?.()} />
+      <span className={checked ? "check-box is-on" : "check-box"} aria-hidden="true">
+        <svg viewBox="0 0 16 16">
+          <path d="M3.5 8.2 6.4 11l6.1-6.2" />
+        </svg>
+      </span>
+      <span>{children}</span>
+    </label>
+  );
+}

@@ -1,5 +1,6 @@
 import { BoundForm } from "@/components/bound-form";
 import { ConfirmForm } from "@/components/confirm-form";
+import { Check } from "@/components/controls/check";
 import { PendingButton } from "@/components/ui";
 import { deleteAddressAction, saveAddressAction } from "@/server/actions/account";
 import { requireUser } from "@/lib/session";
@@ -58,10 +59,7 @@ export default async function AddressesPage() {
             ملاحظات
             <textarea className="field" name="notes" rows={2} />
           </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="isDefault" />
-            عنوان افتراضي
-          </label>
+          <Check name="isDefault">عنوان افتراضي</Check>
         </BoundForm>
       </section>
     </div>

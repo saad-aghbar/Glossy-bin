@@ -6,7 +6,7 @@ export const metadata = { title: "حساب جديد" };
 
 export default function RegisterPage() {
   return (
-    <section className="card mx-auto grid w-full max-w-md gap-4 p-6">
+    <section className="card shop-column grid gap-4 p-6">
       <h1 className="text-2xl font-extrabold">إنشاء حساب</h1>
       <BoundForm action={registerAction} submit="تسجيل">
         <label className="grid gap-1">

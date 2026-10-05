@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { MobileNav } from "@/components/mobile-nav";
+import { Suspense, type ReactNode } from "react";
+import { ShopNav, type ShopGroup } from "@/components/shop-nav";
 import { storeTagline } from "@/lib/brand";
 import { isAdminRole } from "@/lib/access";
 import type { getCurrentUser } from "@/lib/session";
@@ -22,11 +22,42 @@ export function SiteHeader({
   categories: Categories;
 }) {
   const name = settings?.storeName || "Glossy";
-  const accountHref = user ? (isAdminRole(user.role) ? "/admin" : "/account") : "/account/login";
-  const accountLabel = user ? (isAdminRole(user.role) ? "الإدارة" : "حسابي") : "دخول";
+  const shopping: ShopGroup = {
+    id: "shop",
+    label: "التسوق",
+    links: [
+      { href: "/products", label: "الكل", exact: true },
+      ...categories.map((category) => ({ href: `/products?category=${category.slug}`, label: category.name })),
+    ],
+  };
+  const help: ShopGroup = {
+    id: "help",
+    label: "مساعدة",
+    links: [
+      { href: "/contact", label: "تواصل" },
+      { href: "/pages/delivery", label: "التوصيل" },
+      { href: "/pages/privacy", label: "الخصوصية" },
+      { href: "/pages/terms", label: "الشروط" },
+    ],
+  };
+  const account: ShopGroup = {
+    id: "account",
+    label: user ? (isAdminRole(user.role) ? "حسابي" : "حسابي") : "حسابي",
+    links: user
+      ? [
+          ...(isAdminRole(user.role) ? [{ href: "/admin", label: "الإدارة" }] : []),
+          { href: "/account", label: "الحساب", exact: true },
+          { href: "/account/orders", label: "الطلبات" },
+          { href: "/account/addresses", label: "العناوين" },
+        ]
+      : [
+          { href: "/account/login", label: "دخول" },
+          { href: "/account/register", label: "إنشاء حساب" },
+        ],
+  };
   return (
     <header className="site-header">
-        <div className="shell flex flex-wrap items-center justify-between gap-4 py-4">
+      <div className="shell site-bar">
         <Link href="/" className="wordmark inline-flex items-center gap-2">
           {settings?.logoUrl ? (
             // The store name beside the mark is the accessible name.
@@ -35,27 +66,15 @@ export function SiteHeader({
           ) : null}
           {name}
         </Link>
-        <nav className="nav-links" aria-label="التنقل الرئيسي">
-          <Link href="/products">الكل</Link>
-          {categories.map((category) => (
-            <Link key={category.id} href={`/products?category=${category.slug}`}>
-              {category.name}
-            </Link>
-          ))}
-        </nav>
-        <div className="utility">
-          <Link href="/cart">الحقيبة{cartCount > 0 ? ` (${cartCount})` : ""}</Link>
-          <Link href={accountHref}>{accountLabel}</Link>
-        </div>
-        <MobileNav>
-          <Link href="/products">الكل</Link>
-          {categories.map((category) => (
-            <Link key={category.id} href={`/products?category=${category.slug}`}>
-              {category.name}
-            </Link>
-          ))}
-          <Link href="/contact">تواصل</Link>
-        </MobileNav>
+        <Suspense fallback={<div className="shop-menus" />}>
+          <ShopNav
+            shopping={shopping}
+            help={help}
+            account={account}
+            cartHref="/cart"
+            cartLabel={cartCount > 0 ? `الحقيبة (${cartCount})` : "الحقيبة"}
+          />
+        </Suspense>
       </div>
     </header>
   );
@@ -64,7 +83,7 @@ export function SiteHeader({
 export function SiteFooter({ settings }: { settings: Settings }) {
   return (
     <footer className="site-footer">
-      <div className="shell grid gap-8 py-10 md:grid-cols-3">
+      <div className="shell site-footer-grid">
         <nav className="grid gap-2 text-sm" aria-label="المساعدة">
           <p className="text-foreground">مساعدة</p>
           <Link href="/contact">تواصل</Link>

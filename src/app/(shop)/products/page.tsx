@@ -51,7 +51,7 @@ export default async function ProductsPage({
         <h1 className="m-0 text-4xl font-normal">التسوق</h1>
         <p className="quiet">{result.total} منتج</p>
       </header>
-      <form className="grid min-w-0 gap-3 border-b border-line pb-6 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end" method="get">
+      <form className="card grid min-w-0 gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end" method="get">
         <label className="grid min-w-0 gap-1 md:col-span-2">
           البحث
           <input className="field" name="q" defaultValue={q} placeholder="اسم المنتج" />
@@ -76,9 +76,11 @@ export default async function ProductsPage({
         </div>
       </form>
       {result.cards.length === 0 ? (
-        <p className="card p-6">لا توجد منتجات مطابقة.</p>
+        <p className="card shop-empty">
+          لا توجد منتجات مطابقة. <Link href="/products">العودة إلى الكل</Link>
+        </p>
       ) : (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+        <div className="product-grid">
           {result.cards.map((item) => (
             <ProductCard
               key={item.id}
@@ -86,8 +88,9 @@ export default async function ProductsPage({
               name={item.name}
               imageUrl={item.imageUrl}
               imageAlt={item.imageAlt}
-              meta={[item.brandName, item.categoryName].filter(Boolean).join(" · ")}
+              category={item.categoryName}
               priceMinor={item.minPriceMinor}
+              compareAtMinor={item.compareAtMinor}
               currency={settings?.currency ?? "SAR"}
               minorUnit={settings?.minorUnit ?? 100}
               inStock={item.inStock}

@@ -14,7 +14,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const next = safeNextPath(one(params.next));
   return (
-    <section className="card mx-auto grid w-full max-w-md gap-4 p-6">
+    <section className="card shop-column grid gap-4 p-6">
       <h1 className="text-2xl font-extrabold">تسجيل الدخول</h1>
       <BoundForm action={loginAction} submit="دخول">
         <input type="hidden" name="next" value={next} />

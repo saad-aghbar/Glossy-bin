@@ -11,7 +11,7 @@ export default async function VerifyEmailPage({
   const params = await searchParams;
   const error = one(params.error);
   return (
-    <section className="card mx-auto grid w-full max-w-md gap-4 p-6">
+    <section className="card shop-column grid gap-4 p-6">
       <h1 className="text-2xl font-extrabold">تأكيد البريد</h1>
       {error ? (
         <p className="alert">{authLinkMessage(error)}</p>

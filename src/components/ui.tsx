@@ -24,14 +24,19 @@ export function PlateImage({
   alt,
   className = "plate w-full object-cover",
   photo = false,
+  bare = false,
 }: {
   src: string | null;
   alt: string;
   className?: string;
   photo?: boolean;
+  bare?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  if (!src || failed) return <RosePlate name={alt || "منتج"} className={className.replace(" object-cover", "")} />;
+  if (!src || failed) {
+    if (bare) return null;
+    return <RosePlate name={alt || "منتج"} className={className.replace(" object-cover", "")} />;
+  }
   return (
     // Uploaded files are not known at build time.
     // eslint-disable-next-line @next/next/no-img-element

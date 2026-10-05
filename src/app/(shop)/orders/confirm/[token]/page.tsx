@@ -16,7 +16,7 @@ export default async function ConfirmationPage({ params }: { params: Promise<{ t
   const [order, settings, user] = await Promise.all([getOrderByToken(token), getSettings(), getCurrentUser()]);
   if (!order || !settings) notFound();
   return (
-    <article className="card grid gap-4 p-6">
+    <article className="card shop-column grid gap-4 p-6">
       <h1 className="text-3xl font-extrabold">تم استلام الطلب</h1>
       <p>
         رقم الطلب <strong>{order.number}</strong>

@@ -1,3 +1,4 @@
+import { FluidCanvas } from "@/components/fluid-canvas";
 import { SiteFooter, SiteHeader } from "@/components/site";
 import { TrackingConsent } from "@/components/tracking";
 import { isAdminRole } from "@/lib/access";
@@ -14,11 +15,12 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
     listActiveCategories(),
   ]);
   return (
-    <>
+    <div className="shop-app flex-1">
+      <FluidCanvas id="shop-fluid" className="shop-fluid" />
       <SiteHeader settings={settings} user={user} cartCount={count} categories={categories} />
-      <main className="shell flex-1">{children}</main>
+      <main className="shop-main flex-1">{children}</main>
       <SiteFooter settings={settings} />
       <TrackingConsent isAdmin={isAdminRole(user?.role)} pixelId={configuredPixelId(process.env.META_PIXEL_ID)} />
-    </>
+    </div>
   );
 }

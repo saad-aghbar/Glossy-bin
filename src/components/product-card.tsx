@@ -7,7 +7,7 @@ export function ProductCard({
   name,
   imageUrl,
   imageAlt,
-  meta,
+  category,
   priceMinor,
   compareAtMinor,
   currency,
@@ -18,7 +18,7 @@ export function ProductCard({
   name: string;
   imageUrl: string | null;
   imageAlt: string;
-  meta?: string | null;
+  category?: string | null;
   priceMinor: number | null;
   compareAtMinor?: number | null;
   currency: string;
@@ -27,18 +27,22 @@ export function ProductCard({
 }) {
   return (
     <Link href={href} className="product-tile">
-      <PlateImage src={imageUrl} alt={imageAlt || name} />
-      <h2>{name}</h2>
-      {meta ? <p className="quiet">{meta}</p> : null}
-      {priceMinor != null ? (
-        <p className="price">
-          {compareAtMinor && compareAtMinor > priceMinor ? (
-            <s>{formatMinor(compareAtMinor, currency, minorUnit)}</s>
-          ) : null}
-          <span>{formatMinor(priceMinor, currency, minorUnit)}</span>
-        </p>
-      ) : null}
-      <p className="quiet">{inStock ? "متوفر" : "نفد"}</p>
+      <p className="product-kicker">{category}</p>
+      <div className="product-photo">
+        <PlateImage src={imageUrl} alt={imageAlt || name} bare className="product-photo-img" />
+      </div>
+      <div className="product-copy">
+        <h2>{name}</h2>
+        {priceMinor != null ? (
+          <p className="price">
+            {compareAtMinor != null && compareAtMinor > priceMinor ? (
+              <s>{formatMinor(compareAtMinor, currency, minorUnit)}</s>
+            ) : null}
+            <span>{formatMinor(priceMinor, currency, minorUnit)}</span>
+          </p>
+        ) : null}
+        {inStock ? null : <p className="product-stock">نفد</p>}
+      </div>
     </Link>
   );
 }

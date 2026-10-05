@@ -25,7 +25,9 @@ SOFTWARE.
 
 "use strict";
 
-// Simulation section
+// Each page shell calls bootFluid on its own canvas. The loop stops once that canvas leaves the page.
+window.bootFluid = function bootFluid(canvas) {
+if (!canvas || canvas.dataset.booted === "yes") return;
 
 function resizeCanvas() {
   let width = scaleByPixelRatio(canvas.clientWidth);
@@ -43,20 +45,17 @@ function scaleByPixelRatio(input) {
   return Math.floor(input * pixelRatio);
 }
 
-const canvas = document.getElementById("admin-fluid");
-if (canvas && canvas.dataset.booted !== "yes") {
 canvas.dataset.booted = "yes";
 resizeCanvas();
 
 fetch("/fluid/config.json")
   .then((response) => response.json())
   .then((config) => {
-    runSimulation(config);
+    if (canvas.isConnected) runSimulation(config);
   })
   .catch((error) => {
     console.error(error);
   });
-}
 
 function runSimulation(config) {
   function pointerPrototype() {
@@ -1283,8 +1282,8 @@ function runSimulation(config) {
   updateKeywords();
   initFramebuffers();
   multipleSplats(4);
-  setInterval(() => {
-    if (!config.PAUSED && canvas.isConnected) splatStack.push(1);
+  const splatTimer = setInterval(() => {
+    if (!config.PAUSED && !document.hidden) splatStack.push(1);
   }, 2600);
 
   let lastUpdateTime = Date.now();
@@ -1292,6 +1291,11 @@ function runSimulation(config) {
   update();
 
   function update() {
+    if (!canvas.isConnected) {
+      clearInterval(splatTimer);
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      return;
+    }
     const dt = calcDeltaTime();
     if (resizeCanvas()) initFramebuffers();
     updateColors(dt);
@@ -1692,11 +1696,6 @@ function runSimulation(config) {
     }
   });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.code === "KeyP") config.PAUSED = !config.PAUSED;
-    if (e.key === " ") splatStack.push(parseInt(Math.random() * 20) + 5);
-  });
-
   function updatePointerDownData(pointer, id, posX, posY) {
     pointer.id = id;
     pointer.down = true;
@@ -1834,3 +1833,4 @@ function runSimulation(config) {
     return hash;
   }
 }
+};

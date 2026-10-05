@@ -146,13 +146,25 @@ export async function listProducts(input: {
 
   const cards = rows.map((row) => {
     const productVariants = variants.filter((item) => item.productId === row.id);
-    const prices = productVariants.map((item) => item.priceMinor);
+    const cheapest = productVariants.reduce<(typeof productVariants)[number] | null>((best, item) => {
+      if (!best || item.priceMinor < best.priceMinor) return item;
+      return best;
+    }, null);
+    const compareAt = cheapest
+      ? productVariants.find(
+          (item) =>
+            item.priceMinor === cheapest.priceMinor &&
+            item.compareAtPriceMinor != null &&
+            item.compareAtPriceMinor > item.priceMinor,
+        )?.compareAtPriceMinor ?? null
+      : null;
     const image = images.find((item) => item.productId === row.id);
     return {
       ...row,
       imageUrl: image?.url ?? null,
       imageAlt: image?.alt ?? row.name,
-      minPriceMinor: prices.length ? Math.min(...prices) : null,
+      minPriceMinor: cheapest ? cheapest.priceMinor : null,
+      compareAtMinor: compareAt,
       inStock: productVariants.some((item) => item.stockQty > 0),
     };
   });

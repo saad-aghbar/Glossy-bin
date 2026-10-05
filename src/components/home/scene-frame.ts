@@ -7,6 +7,13 @@ function mix(current: number, target: number, amount: number) {
   return current + (target - current) * amount;
 }
 
+function place(group: Group | null, target: [number, number, number], amount: number) {
+  if (!group) return;
+  group.position.x = mix(group.position.x, target[0], amount);
+  group.position.y = mix(group.position.y, target[1], amount);
+  group.position.z = mix(group.position.z, target[2], amount);
+}
+
 type Scrub = { setTime: (time: number) => void } | null;
 
 function scrub(control: Scrub, time: number) {
@@ -21,6 +28,8 @@ export function stepScene({
   renderer,
   root,
   lipstick,
+  compact,
+  gloss,
   lipstickMixer,
   compactMixer,
   glossMixer,
@@ -35,6 +44,8 @@ export function stepScene({
   renderer: WebGLRenderer;
   root: Group | null;
   lipstick: Group | null;
+  compact: Group | null;
+  gloss: Group | null;
   lipstickMixer: Scrub;
   compactMixer: Scrub;
   glossMixer: Scrub;
@@ -53,6 +64,9 @@ export function stepScene({
   camera.lookAt(pose.look[0], pose.look[1], pose.look[2]);
 
   if (root) root.position.x = mix(root.position.x, -pose.shift * 0.12, amount);
+  place(lipstick, pose.lipstick, amount);
+  place(compact, pose.compact, amount);
+  place(gloss, pose.gloss, amount);
   if (lipstick) lipstick.rotation.y = mix(lipstick.rotation.y, pose.lipstickYaw, amount);
   scrub(lipstickMixer, pose.lipstickTime);
   scrub(compactMixer, pose.compactTime);

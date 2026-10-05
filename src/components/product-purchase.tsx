@@ -90,7 +90,7 @@ export function ProductPurchase({
   }
 
   return (
-    <div className="grid items-start gap-8 py-8 md:grid-cols-2 md:gap-16">
+    <div className="product-split grid items-start gap-8 py-8">
       <div className="grid gap-2">
         {active ? (
           <PlateImage key={active.url} src={active.url} alt={active.alt || name} photo />

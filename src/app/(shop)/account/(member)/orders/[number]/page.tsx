@@ -11,7 +11,7 @@ export default async function OwnOrderPage({ params }: { params: Promise<{ numbe
   if (!order || !settings) notFound();
   const money = (amount: number) => formatMinor(amount, settings.currency, settings.minorUnit);
   return (
-    <article className="grid gap-4">
+    <article className="card shop-column grid gap-4 p-5">
       <h1 className="text-2xl font-extrabold">{order.number}</h1>
       <dl className="grid gap-2">
         <div className="flex justify-between gap-3">

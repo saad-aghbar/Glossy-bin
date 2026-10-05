@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Check, Radio } from "@/components/controls/check";
 import { useKeepEnteredValues } from "@/components/keep-values";
 import { visibleBankInstructions } from "@/lib/links";
 import { checkoutAction } from "@/server/actions/checkout";
@@ -41,9 +42,10 @@ export function CheckoutForm({
   const [state, action, pending] = useActionState(checkoutAction, null as ActionState);
   const formRef = useKeepEnteredValues(state);
   const [method, setMethod] = useState<PaymentMethod>(codEnabled ? "cod" : "bank_transfer");
+  const [addressId, setAddressId] = useState(addresses.find((item) => item.isDefault)?.id ?? "");
   const fields = state?.fields ?? {};
   return (
-    <form ref={formRef} action={action} className="grid gap-3">
+    <form ref={formRef} action={action} className="card grid gap-3 p-4">
       {state?.error ? (
         <p className="alert" role="alert">
           {state.error}
@@ -56,17 +58,13 @@ export function CheckoutForm({
         <fieldset className="grid gap-2">
           <legend className="font-bold">عنوان محفوظ</legend>
           {addresses.map((item) => (
-            <label key={item.id} className="flex items-start gap-2">
-              <input type="radio" name="addressId" value={item.id} defaultChecked={item.isDefault} />
-              <span>
-                {item.recipientName} — {item.city}، {item.area}، {item.street}
-              </span>
-            </label>
+            <Radio key={item.id} name="addressId" value={item.id} checked={addressId === item.id} onChecked={() => setAddressId(item.id)}>
+              {item.recipientName} — {item.city}، {item.area}، {item.street}
+            </Radio>
           ))}
-          <label className="flex items-center gap-2">
-            <input type="radio" name="addressId" value="" defaultChecked={addresses.every((item) => !item.isDefault)} />
+          <Radio name="addressId" value="" checked={addressId === ""} onChecked={() => setAddressId("")}>
             عنوان جديد
-          </label>
+          </Radio>
         </fieldset>
       ) : null}
       <Field label="الاسم" name="recipientName" defaultValue={user?.name ?? ""} error={fields.recipientName} />
@@ -79,37 +77,18 @@ export function CheckoutForm({
         ملاحظات
         <textarea className="field" name="notes" rows={3} />
       </label>
-      {user ? (
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="saveAddress" />
-          حفظ هذا العنوان في حسابي
-        </label>
-      ) : null}
+      {user ? <Check name="saveAddress">حفظ هذا العنوان في حسابي</Check> : null}
       <fieldset className="grid gap-2">
         <legend className="font-bold">طريقة الدفع</legend>
         {codEnabled ? (
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="cod"
-              checked={method === "cod"}
-              onChange={() => setMethod("cod")}
-            />
+          <Radio name="paymentMethod" value="cod" checked={method === "cod"} onChecked={() => setMethod("cod")}>
             {paymentMethodLabel.cod}
-          </label>
+          </Radio>
         ) : null}
         {bankTransferEnabled ? (
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="bank_transfer"
-              checked={method === "bank_transfer"}
-              onChange={() => setMethod("bank_transfer")}
-            />
+          <Radio name="paymentMethod" value="bank_transfer" checked={method === "bank_transfer"} onChecked={() => setMethod("bank_transfer")}>
             {paymentMethodLabel.bank_transfer}
-          </label>
+          </Radio>
         ) : null}
         {visibleBankInstructions(method, bankInstructions) ? (
           <p className="whitespace-pre-wrap text-sm">{visibleBankInstructions(method, bankInstructions)}</p>

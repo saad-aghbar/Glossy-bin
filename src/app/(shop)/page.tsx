@@ -35,8 +35,9 @@ function ProductRail({
             name={item.name}
             imageUrl={item.imageUrl}
             imageAlt={item.imageAlt}
-            meta={item.categoryName}
+            category={item.categoryName}
             priceMinor={item.minPriceMinor}
+            compareAtMinor={item.compareAtMinor}
             currency={currency}
             minorUnit={minorUnit}
             inStock={item.inStock}

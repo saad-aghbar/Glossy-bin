@@ -22,13 +22,6 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
     if (!section || mode !== "scene") return;
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     heroBridge.allowPointer = fine;
-    let frame = 0;
-
-    const place = () => {
-      const header = document.querySelector(".site-header");
-      const height = header instanceof HTMLElement ? header.offsetHeight : 0;
-      section.style.marginTop = height ? `-${height}px` : "";
-    };
 
     const update = () => {
       const distance = section.offsetHeight - window.innerHeight;
@@ -46,12 +39,7 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
     };
 
     const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        place();
-        update();
-      });
+      update();
     };
 
     const onPointer = (event: PointerEvent) => {
@@ -67,7 +55,6 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
       if (heroBridge.playing) heroBridge.invalidate();
     };
 
-    place();
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
@@ -78,7 +65,6 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
       window.removeEventListener("resize", onScroll);
       window.removeEventListener("pointermove", onPointer);
       document.removeEventListener("visibilitychange", onHide);
-      if (frame) cancelAnimationFrame(frame);
       const header = document.querySelector(".site-header");
       if (header instanceof HTMLElement) delete header.dataset.tone;
     };

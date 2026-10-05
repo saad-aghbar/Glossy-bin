@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Stepper } from "@/components/controls/stepper";
-import { PendingButton } from "@/components/ui";
+import { PendingButton, RosePlate } from "@/components/ui";
 import { removeCartAction, updateCartAction } from "@/server/actions/cart";
 import { describeCartLine } from "@/lib/cart-lines";
 import { formatMinor } from "@/lib/money";
@@ -36,21 +36,22 @@ export default async function CartPage({
     .filter((row) => !row.status.blocked)
     .reduce((sum, row) => sum + row.item.variant.priceMinor * row.item.qty, 0);
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 py-8">
       <h1 className="m-0 text-4xl font-normal">الحقيبة</h1>
       {rows.some((row) => row.status.blocked) ? (
         <p className="alert">بعض القطع لم تعد متاحة للشراء أو كميتها أكبر من المتوفر. احذفيها قبل إتمام الطلب.</p>
       ) : null}
       {one(params.error) ? <p className="alert">{one(params.error)}</p> : null}
       {items.length === 0 ? (
-        <p className="card p-6">
+        <p className="card shop-empty">
           السلة فارغة. <Link href="/products">تصفحي المنتجات</Link>
         </p>
       ) : (
         <div className="grid gap-4">
           {rows.map(({ item, status }) => {
             return (
-            <article key={item.id} className="card grid min-w-0 gap-3 p-4 md:grid-cols-[1fr_auto] md:items-center">
+            <article key={item.id} className="card grid min-w-0 gap-3 p-4 md:grid-cols-[4.5rem_1fr_auto] md:items-center">
+              <RosePlate name={item.variant.product.name} className="plate w-full" />
               <div className="min-w-0">
                 <h2 className="break-words font-bold">{item.variant.product.name}</h2>
                 <p className="text-sm text-muted">{variantLabel(item.variant.shadeName, item.variant.sizeName)}</p>

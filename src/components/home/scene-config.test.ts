@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nextQuality } from "./quality";
-import { scenePose } from "./scene-config";
+import { productLayout, scenePose, tierDetail } from "./scene-config";
 
 describe("scenePose", () => {
   it("opens the lipstick before the compact", () => {
@@ -15,10 +15,51 @@ describe("scenePose", () => {
     expect(late.compactTime).toBeGreaterThan(1);
   });
 
-  it("frames a narrow screen from farther back", () => {
-    const desktop = scenePose(0, false);
-    const phone = scenePose(0, true);
-    expect(phone.camera[2]).toBeGreaterThan(desktop.camera[2]);
+  it("keeps desktop products apart", () => {
+    const rest = scenePose(0, false);
+    expect(rest.lipstick[0] - rest.compact[0]).toBeGreaterThan(3);
+    expect(Math.abs(rest.gloss[0] - rest.lipstick[0])).toBeGreaterThan(1.4);
+    expect(Math.abs(rest.gloss[0] - rest.compact[0])).toBeGreaterThan(1.4);
+    expect(productLayout.lipstick[0] - productLayout.compact[0]).toBeGreaterThan(3);
+  });
+
+  it("shows one product at a time on a narrow screen", () => {
+    const compact = scenePose(0.1, true);
+    const gloss = scenePose(0.5, true);
+    const lipstick = scenePose(0.85, true);
+    expect(Math.abs(compact.compact[0])).toBeLessThan(0.2);
+    expect(Math.abs(compact.lipstick[0])).toBeGreaterThan(2);
+    expect(Math.abs(compact.gloss[0])).toBeGreaterThan(2);
+    expect(Math.abs(gloss.gloss[0])).toBeLessThan(0.2);
+    expect(Math.abs(gloss.compact[0])).toBeGreaterThan(2);
+    expect(Math.abs(lipstick.lipstick[0])).toBeLessThan(0.2);
+    expect(Math.abs(lipstick.compact[0])).toBeGreaterThan(2);
+    expect(compact.focus).toBe("compact");
+    expect(gloss.focus).toBe("gloss");
+    expect(lipstick.focus).toBe("lipstick");
+  });
+
+  it("hands the stage from one product to the next without a gap or a collision", () => {
+    for (let step = 0; step <= 100; step += 1) {
+      const pose = scenePose(step / 100, true);
+      const xs = [pose.compact[0], pose.gloss[0], pose.lipstick[0]];
+      expect(Math.min(...xs.map((x) => Math.abs(x)))).toBeLessThan(1);
+      for (let index = 0; index < xs.length; index += 1) {
+        for (let other = index + 1; other < xs.length; other += 1) {
+          if (Math.abs(xs[index]) < 2 && Math.abs(xs[other]) < 2) {
+            expect(Math.abs(xs[index] - xs[other])).toBeGreaterThan(1.4);
+          }
+        }
+      }
+    }
+  });
+});
+
+describe("tierDetail", () => {
+  it("keeps the studio environment on every quality tier", () => {
+    expect(tierDetail.low.environment).toBe(true);
+    expect(tierDetail.medium.environment).toBe(true);
+    expect(tierDetail.high.environment).toBe(true);
   });
 });
 

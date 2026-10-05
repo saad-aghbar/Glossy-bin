@@ -9,11 +9,13 @@ export function BoundForm({
   action,
   submit,
   cancelHref,
+  replaceOnOk = false,
   children,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   submit: string;
   cancelHref?: string;
+  replaceOnOk?: boolean;
   children: ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
@@ -59,7 +61,8 @@ export function BoundForm({
           </a>
         </p>
       ) : null}
-      {children}
+      {replaceOnOk && state?.ok && !dirty ? null : children}
+      {replaceOnOk && state?.ok && !dirty ? null : (
       <div className="flex flex-wrap items-center gap-4">
         <button className="btn btn-primary" type="submit" disabled={pending}>
           {pending ? "لحظة..." : submit}
@@ -70,6 +73,7 @@ export function BoundForm({
           </Link>
         ) : null}
       </div>
+      )}
       <div className={visible ? "admin-save is-on" : "admin-save"} aria-hidden={visible ? undefined : true}>
         <span>{pending ? "جارٍ الحفظ" : state?.error ? state.error : "تغييرات غير محفوظة"}</span>
         <button className="btn btn-primary" type="submit" disabled={pending}>

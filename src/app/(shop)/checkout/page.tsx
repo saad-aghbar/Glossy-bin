@@ -22,7 +22,7 @@ export default async function CheckoutPage({
   const settings = quote.settings ?? (await getSettings());
   if (!quote.cart?.items.length) {
     return (
-      <p className="card p-6">
+      <p className="card shop-empty">
         السلة فارغة. <Link href="/products">العودة للتسوق</Link>
       </p>
     );
@@ -35,8 +35,8 @@ export default async function CheckoutPage({
     settings?.bankTransferEnabled ? paymentMethodLabel.bank_transfer : null,
   ].filter(Boolean);
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="order-2 grid gap-4 lg:order-1">
+    <div className="shop-split py-8">
+      <div className="grid gap-4">
         <h1 className="m-0 text-4xl font-normal">الدفع</h1>
         {quote.blocked ? (
           <p className="alert">
@@ -93,8 +93,8 @@ export default async function CheckoutPage({
           blocked={quote.blocked}
         />
       </div>
-      <aside className="order-1 h-fit lg:order-2">
-        <details className="order-summary grid gap-3 border-t border-line py-6 lg:border-t-0 lg:border-s lg:ps-8" open>
+      <aside className="h-fit">
+        <details className="order-summary card grid gap-3 p-4" open>
         <summary className="text-xl">ملخص الطلب</summary>
         {quote.lines.map((line) => (
           <div key={line.variantId} className="grid gap-1 text-sm">

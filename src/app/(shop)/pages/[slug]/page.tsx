@@ -13,7 +13,7 @@ export default async function ContentPage({ params }: { params: Promise<{ slug: 
   const page = await getContentPage(slug);
   if (!page) notFound();
   return (
-    <article className="card grid gap-4 p-6">
+    <article className="card shop-article grid gap-4 p-6">
       <h1 className="text-3xl font-extrabold">{page.title}</h1>
       <div className="whitespace-pre-wrap leading-8">{publicPageText(page.approvedAt, page.body)}</div>
     </article>

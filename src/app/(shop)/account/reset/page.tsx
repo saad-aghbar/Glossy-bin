@@ -14,7 +14,7 @@ export default async function ResetPage({
   const token = one(params.token);
   const error = one(params.error);
   return (
-    <section className="card mx-auto grid w-full max-w-md gap-4 p-6">
+    <section className="card shop-column grid gap-4 p-6">
       <h1 className="text-2xl font-extrabold">كلمة مرور جديدة</h1>
       {error ? <p className="alert">{authLinkMessage(error)}</p> : null}
       <BoundForm action={resetAction} submit="حفظ كلمة المرور">

@@ -37,11 +37,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   await connection();
   return (
     <html lang="ar" dir="rtl" className={`${readex.variable} h-full`}>
-      <head>
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
-      </head>
       <body className="flex min-h-dvh flex-col antialiased">
         <FreshSafari />
         {children}

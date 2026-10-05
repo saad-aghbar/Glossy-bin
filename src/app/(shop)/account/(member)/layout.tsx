@@ -11,7 +11,7 @@ export default async function MemberLayout({ children }: { children: React.React
     return <p className="alert">تم إيقاف هذا الحساب. تواصلي مع المتجر إذا كان ذلك بالخطأ.</p>;
   }
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 py-8">
       <div className="account-nav">
         <nav className="flex flex-wrap gap-3" aria-label="الحساب">
           <NavLink href="/account" exact>
