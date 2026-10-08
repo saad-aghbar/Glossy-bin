@@ -75,20 +75,41 @@ export function stepScene({
   const info = renderer.info.render;
   heroBridge.calls = info.calls;
   heroBridge.triangles = info.triangles;
-  samples.push(delta);
-  if (samples.length > 40) samples.shift();
-  const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
-  heroBridge.frameMs = average * 1000;
+  if (delta > 0 && delta <= 0.05) {
+    samples.push(delta);
+    if (samples.length > 40) samples.shift();
+  }
   const now = performance.now();
   let next = tier;
-  if (samples.length >= 30 && now - switchedAt.current > 2500) {
-    const proposed = nextQuality(tier, average);
-    if (proposed !== tier) {
-      switchedAt.current = now;
-      next = proposed;
+  if (samples.length > 0) {
+    const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+    heroBridge.frameMs = average * 1000;
+    if (samples.length >= 30 && now - switchedAt.current > 2500) {
+      const proposed = nextQuality(tier, average);
+      if (proposed !== tier) {
+        switchedAt.current = now;
+        next = proposed;
+      }
     }
   }
-  const settled = Math.abs(camera.position.z - pose.camera[2]) < 0.01;
+  const swayTargetX = pose.camera[0] + heroBridge.pointerX * 0.12 * sway;
+  const swayTargetY = pose.camera[1] + heroBridge.pointerY * 0.08 * sway;
+  const settled =
+    near(camera.position.x, swayTargetX) &&
+    near(camera.position.y, swayTargetY) &&
+    near(camera.position.z, pose.camera[2]) &&
+    placedNear(lipstick, pose.lipstick) &&
+    placedNear(compact, pose.compact) &&
+    placedNear(gloss, pose.gloss);
   if (!settled) heroBridge.invalidate();
   return next;
+}
+
+function near(current: number, target: number) {
+  return Math.abs(current - target) < 0.01;
+}
+
+function placedNear(group: Group | null, target: [number, number, number]) {
+  if (!group) return true;
+  return near(group.position.x, target[0]) && near(group.position.y, target[1]) && near(group.position.z, target[2]);
 }

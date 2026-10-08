@@ -61,7 +61,7 @@ export default async function CollagePage({
           {editing?.imageUrl ? (
             // Stored uploads are not known at build time.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={editing.imageUrl} alt="" className="aspect-[2/1] w-full rounded-xl object-cover" />
+            <img src={editing.imageUrl} alt="" className="aspect-[2/1] w-full rounded-xl object-cover" loading="lazy" decoding="async" />
           ) : null}
           <div className="grid gap-1">
             الصورة

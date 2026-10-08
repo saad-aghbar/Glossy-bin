@@ -186,7 +186,7 @@ export default async function AdminProductsPage({
       <div className="grid gap-2 md:hidden">
         {catalog.map((row) => (
           <article key={row.id} className="admin-surface flex gap-3 p-3">
-            <PlateImage src={row.imageUrl} alt="" className="plate h-16 w-16 object-cover" />
+            <PlateImage src={row.imageUrl} alt="" sizes="4rem" className="plate h-16 w-16 object-cover" />
             <div className="min-w-0">
               <Link className="font-medium" href={`/admin/products/${row.id}`}>{row.name}</Link>
               <p className="admin-note">{publicationLabel(row)} · {row.price} · المخزون {row.stock}</p>
@@ -212,7 +212,7 @@ export default async function AdminProductsPage({
               <tr key={row.id}>
                 <td>
                   <Link className="flex items-center gap-2" href={`/admin/products/${row.id}`}>
-                    <PlateImage src={row.imageUrl} alt="" className="plate h-12 w-12 object-cover" />
+                    <PlateImage src={row.imageUrl} alt="" sizes="3rem" className="plate h-12 w-12 object-cover" />
                     <span>{row.name}</span>
                   </Link>
                 </td>

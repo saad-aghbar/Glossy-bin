@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PlateImage } from "@/components/ui";
 
 export type RibbonSlide = {
   id: string;
@@ -60,9 +61,7 @@ export function ImageRibbon({ slides }: { slides: RibbonSlide[] }) {
                 setOpenId(slide.id);
               }}
             >
-              {/* Decorative ribbon photos; the button carries the name. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={slide.imageUrl} alt="" />
+              <PlateImage src={slide.imageUrl} alt="" bare sizes="(max-width: 767px) 68vw, 16rem" className="image-ribbon-img" />
               <a className="image-ribbon-go" href={slide.linkUrl || "/products"} tabIndex={copy ? -1 : undefined}>
                 {slide.buttonLabel}
               </a>

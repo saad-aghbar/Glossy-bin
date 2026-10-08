@@ -8,8 +8,8 @@ export const heroCopy = {
 } as const;
 
 export const heroLength = {
-  mobile: "220dvh",
-  desktop: "300dvh",
+  mobile: "2.2",
+  desktop: "3",
 } as const;
 
 export const sceneColors = {
@@ -30,6 +30,16 @@ export const tierDetail = {
   medium: { shadow: false, environment: true, dprMax: 1.5 },
   low: { shadow: false, environment: true, dprMax: 1 },
 } as const;
+
+export function pixelRatioCap(tier: QualityTier, narrow: boolean) {
+  if (narrow && tier === "low") return 1.25;
+  return tierDetail[tier].dprMax;
+}
+
+export function castShadows(tier: QualityTier, narrow: boolean) {
+  if (narrow) return tier === "high";
+  return tierDetail[tier].shadow;
+}
 
 export const productScale = 15;
 

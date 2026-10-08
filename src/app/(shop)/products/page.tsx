@@ -81,9 +81,10 @@ export default async function ProductsPage({
         </p>
       ) : (
         <div className="product-grid">
-          {result.cards.map((item) => (
+          {result.cards.map((item, index) => (
             <ProductCard
               key={item.id}
+              preload={index === 0}
               slug={item.slug}
               href={`/products/${item.slug}?from=${encodeURIComponent(from)}`}
               name={item.name}

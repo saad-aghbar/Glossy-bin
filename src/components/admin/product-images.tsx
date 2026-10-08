@@ -53,7 +53,7 @@ export function ProductImages({
           onDrop={() => dropAt(index)}
           onDragEnd={() => setDragIndex(null)}
         >
-          <PlateImage src={image.url} alt={image.alt || productName} className="aspect-square w-full object-cover" />
+          <PlateImage src={image.url} alt={image.alt || productName} sizes="(max-width: 900px) 40vw, 10rem" className="aspect-square w-full object-cover" />
           <p className="text-sm">{image.variantLabel}</p>
           <p className="text-sm">{index === 0 ? "الصورة الرئيسية" : image.alt || "صورة إضافية"}</p>
           <div className="flex flex-wrap gap-2">

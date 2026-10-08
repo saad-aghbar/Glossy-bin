@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { isOptimizableImage } from "@/lib/image-src";
 
 const plates = ["#e7a8b4", "#f0c7b0", "#d9b7c4", "#c9a892", "#f3d5dc", "#e4cfc4"];
 
@@ -25,28 +27,53 @@ export function PlateImage({
   className = "plate w-full object-cover",
   photo = false,
   bare = false,
+  preload = false,
+  sizes = "(max-width: 900px) 72vw, 280px",
 }: {
   src: string | null;
   alt: string;
   className?: string;
   photo?: boolean;
   bare?: boolean;
+  preload?: boolean;
+  sizes?: string;
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     if (bare) return null;
     return <RosePlate name={alt || "منتج"} className={className.replace(" object-cover", "")} />;
   }
+  const contain = /product-hero-img|product-thumb-img|object-contain/.test(className);
+  const frameClass = `plate-frame${contain ? " is-contain" : ""} ${className}`;
+  if (!isOptimizableImage(src)) {
+    return (
+      <span className={frameClass}>
+        {/* Remote files outside the configured image host stay original. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          loading={preload ? "eager" : "lazy"}
+          fetchPriority={preload ? "high" : "low"}
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      </span>
+    );
+  }
   return (
-    // Uploaded files are not known at build time.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      key={photo ? src : undefined}
-      src={src}
-      alt={alt}
-      className={photo ? `${className} plate-photo` : className}
-      onError={() => setFailed(true)}
-    />
+    <span className={frameClass}>
+      <Image
+        key={photo ? src : undefined}
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        preload={preload}
+        className={photo ? "plate-photo" : undefined}
+        onError={() => setFailed(true)}
+      />
+    </span>
   );
 }
 

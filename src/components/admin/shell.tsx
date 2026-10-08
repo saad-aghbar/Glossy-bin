@@ -184,7 +184,8 @@ function AdminSheet({ name, pathname }: { name: string; pathname: string }) {
   const trigger = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setHost(document.querySelector(".admin-app"));
+    const root = document.querySelector(".admin-app");
+    setHost(root instanceof HTMLElement ? root : null);
   }, []);
 
   useEffect(() => {

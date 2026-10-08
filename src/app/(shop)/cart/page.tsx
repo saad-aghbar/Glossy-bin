@@ -53,7 +53,7 @@ export default async function CartPage({
             return (
             <article key={item.id} className="card cart-line">
               <div className="line-thumb">
-                <PlateImage src={photo?.url ?? null} alt={photo?.alt || item.variant.product.name} bare className="line-thumb-img" />
+                <PlateImage src={photo?.url ?? null} alt={photo?.alt || item.variant.product.name} bare sizes="4.5rem" className="line-thumb-img" />
               </div>
               <div className="min-w-0">
                 <h2 className="break-words font-bold">{item.variant.product.name}</h2>

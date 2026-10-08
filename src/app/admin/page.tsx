@@ -123,7 +123,7 @@ export default async function AdminHomePage({
         {lowStock.length === 0 ? <p className="admin-note px-4 pb-4">لا توجد خيارات بمخزون ٣ أو أقل.</p> : null}
         {lowStock.map((item) => (
           <Link key={`${item.productId}-${item.sku}`} href={`/admin/products/${item.productId}`} className="dash-sku">
-            <PlateImage src={item.imageUrl} alt="" className="plate h-12 w-12 object-cover" />
+            <PlateImage src={item.imageUrl} alt="" sizes="3rem" className="plate h-12 w-12 object-cover" />
             <span>
               <strong className="block font-medium">{item.name}</strong>
               <span className="admin-note">{item.sku}</span>

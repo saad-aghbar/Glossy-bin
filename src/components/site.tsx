@@ -62,7 +62,7 @@ export function SiteHeader({
           {settings?.logoUrl ? (
             // The store name beside the mark is the accessible name.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logoUrl} alt="" className="h-8 w-auto object-contain" />
+            <img src={settings.logoUrl} alt="" className="h-8 w-auto object-contain" decoding="async" fetchPriority="low" />
           ) : null}
           {name}
         </Link>

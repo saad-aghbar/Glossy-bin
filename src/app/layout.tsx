@@ -36,7 +36,7 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   await connection();
   return (
-    <html lang="ar" dir="rtl" className={`${readex.variable} h-full`}>
+    <html lang="ar" dir="rtl" className={`${readex.variable} h-full`} suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col antialiased">
         <FreshSafari />
         {children}

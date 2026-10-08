@@ -25,7 +25,7 @@ function ProductRail({
     <section data-reveal>
       <div className="section-head">
         <h2>{title}</h2>
-        <Link className="quiet-link" href={href}>
+        <Link className="quiet-link" href={href} prefetch={false}>
           الكل
         </Link>
       </div>
@@ -72,7 +72,7 @@ export default async function HomePage() {
       {categories.length > 0 ? (
         <nav className="category-row" aria-label="التصنيفات">
           {categories.map((item) => (
-            <Link key={item.id} href={`/products?category=${item.slug}`} data-reveal>
+            <Link key={item.id} href={`/products?category=${item.slug}`} prefetch={false} data-reveal>
               {item.name}
             </Link>
           ))}

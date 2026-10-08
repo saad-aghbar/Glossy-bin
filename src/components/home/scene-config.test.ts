@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { nextQuality } from "./quality";
-import { productLayout, scenePose, tierDetail } from "./scene-config";
+import { findClip, isGlbPayload } from "./model-bytes";
+import { nextQuality, tierFromSignals } from "./quality";
+import { castShadows, pixelRatioCap, productLayout, scenePose, tierDetail } from "./scene-config";
 
 describe("scenePose", () => {
   it("opens the lipstick before the compact", () => {
@@ -70,5 +71,50 @@ describe("nextQuality", () => {
     expect(nextQuality("medium", 0.04)).toBe("low");
     expect(nextQuality("low", 0.01)).toBe("medium");
     expect(nextQuality("medium", 0.0105)).toBe("high");
+    expect(nextQuality("medium", 0.02)).toBe("medium");
+    expect(nextQuality("low", 0.02)).toBe("low");
+  });
+});
+
+describe("tierFromSignals", () => {
+  it("uses core count when Safari does not report memory", () => {
+    expect(tierFromSignals({ webgl: false, memory: 16, cores: 16 })).toBe("fallback");
+    expect(tierFromSignals({ webgl: true })).toBe("low");
+    expect(tierFromSignals({ webgl: true, memory: 8 })).toBe("low");
+    expect(tierFromSignals({ webgl: true, cores: 8 })).toBe("high");
+    expect(tierFromSignals({ webgl: true, cores: 4 })).toBe("medium");
+    expect(tierFromSignals({ webgl: true, cores: 2 })).toBe("low");
+    expect(tierFromSignals({ webgl: true, memory: 4, cores: 4 })).toBe("medium");
+    expect(tierFromSignals({ webgl: true, memory: 2, cores: 8 })).toBe("low");
+    expect(tierFromSignals({ webgl: true, memory: 8, cores: 8 })).toBe("high");
+  });
+});
+
+describe("narrow rendering", () => {
+  it("keeps phone pictures sharp and saves shadows for the high tier", () => {
+    expect(pixelRatioCap("high", true)).toBe(2);
+    expect(pixelRatioCap("medium", true)).toBe(1.5);
+    expect(pixelRatioCap("low", true)).toBe(1.25);
+    expect(pixelRatioCap("high", false)).toBe(2);
+    expect(pixelRatioCap("low", false)).toBe(1);
+    expect(castShadows("high", true)).toBe(true);
+    expect(castShadows("medium", true)).toBe(false);
+    expect(castShadows("high", false)).toBe(true);
+  });
+});
+
+describe("model payload", () => {
+  it("accepts a GLB header and rejects an HTML error page", () => {
+    const glb = new Uint8Array(12);
+    glb.set([0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0]);
+    expect(isGlbPayload(glb)).toBe(true);
+    expect(isGlbPayload(new TextEncoder().encode("<!DOCTYPE html>"))).toBe(false);
+    expect(isGlbPayload(new Uint8Array([0x67, 0x6c]))).toBe(false);
+  });
+
+  it("skips a missing animation clip", () => {
+    expect(findClip([], "Reveal")).toBeNull();
+    expect(findClip([{ name: "Reveal" }], "Reveal")?.name).toBe("Reveal");
+    expect(findClip([{ name: "Idle" }], "Reveal")?.name).toBe("Idle");
   });
 });

@@ -2,16 +2,40 @@ import type { QualityTier } from "./scene-config";
 
 type NavigatorWithMemory = Navigator & { deviceMemory?: number };
 
-export function detectQuality(): QualityTier | "fallback" {
-  if (typeof window === "undefined") return "medium";
-  const canvas = document.createElement("canvas");
-  const gl = canvas.getContext("webgl2");
-  if (!gl) return "fallback";
-  const memory = (navigator as NavigatorWithMemory).deviceMemory ?? 8;
-  const cores = navigator.hardwareConcurrency ?? 8;
-  if (memory <= 2 || cores <= 2) return "low";
+export type DeviceSignals = {
+  webgl: boolean;
+  memory?: number;
+  cores?: number;
+};
+
+export function tierFromSignals(signals: DeviceSignals): QualityTier | "fallback" {
+  if (!signals.webgl) return "fallback";
+  const { memory, cores } = signals;
+  if (memory != null && memory <= 2) return "low";
+  if (memory == null && cores == null) return "low";
+  if (memory == null) {
+    if ((cores ?? 0) <= 2) return "low";
+    if ((cores ?? 0) >= 6) return "high";
+    return "medium";
+  }
+  if (cores == null || cores <= 2) return "low";
   if (memory <= 4 || cores <= 4) return "medium";
-  return "high";
+  if (memory >= 8 && cores >= 8) return "high";
+  return "medium";
+}
+
+export function detectQuality(): QualityTier | "fallback" {
+  if (typeof window === "undefined") return "low";
+  const canvas = document.createElement("canvas");
+  const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+  const nav = navigator as NavigatorWithMemory;
+  const tier = tierFromSignals({
+    webgl: Boolean(gl),
+    memory: typeof nav.deviceMemory === "number" ? nav.deviceMemory : undefined,
+    cores: typeof navigator.hardwareConcurrency === "number" ? navigator.hardwareConcurrency : undefined,
+  });
+  gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  return tier;
 }
 
 export function nextQuality(current: QualityTier, averageSeconds: number): QualityTier {

@@ -8,6 +8,74 @@ import { loadQuickView } from "@/server/actions/quick-view";
 
 type QuickProduct = Awaited<ReturnType<typeof loadQuickView>>;
 
+function freezePage(dialog: HTMLElement) {
+  const html = document.documentElement;
+  const body = document.body;
+  const scrollY = window.scrollY;
+  const previous = {
+    htmlOverflow: html.style.overflow,
+    bodyOverflow: body.style.overflow,
+    bodyPosition: body.style.position,
+    bodyTop: body.style.top,
+    bodyLeft: body.style.left,
+    bodyRight: body.style.right,
+    bodyWidth: body.style.width,
+  };
+  html.style.overflow = "hidden";
+  body.style.overflow = "hidden";
+  body.style.position = "fixed";
+  body.style.top = `-${scrollY}px`;
+  body.style.left = "0";
+  body.style.right = "0";
+  body.style.width = "100%";
+
+  let lastTouchY = 0;
+
+  function blocksPage(event: Event, deltaY: number) {
+    const target = event.target;
+    if (!(target instanceof Node) || !dialog.contains(target)) return true;
+    if (dialog.scrollHeight <= dialog.clientHeight + 1) return true;
+    const atTop = dialog.scrollTop <= 0;
+    const atBottom = dialog.scrollTop + dialog.clientHeight >= dialog.scrollHeight - 1;
+    if (deltaY < 0 && atTop) return true;
+    if (deltaY > 0 && atBottom) return true;
+    return false;
+  }
+
+  function onTouchStart(event: TouchEvent) {
+    lastTouchY = event.touches[0]?.clientY ?? 0;
+  }
+
+  function onTouchMove(event: TouchEvent) {
+    const y = event.touches[0]?.clientY ?? lastTouchY;
+    const deltaY = lastTouchY - y;
+    if (blocksPage(event, deltaY)) event.preventDefault();
+    lastTouchY = y;
+  }
+
+  function onWheel(event: WheelEvent) {
+    if (blocksPage(event, event.deltaY)) event.preventDefault();
+  }
+
+  document.addEventListener("touchstart", onTouchStart, { passive: true });
+  document.addEventListener("touchmove", onTouchMove, { passive: false });
+  document.addEventListener("wheel", onWheel, { passive: false });
+
+  return () => {
+    document.removeEventListener("touchstart", onTouchStart);
+    document.removeEventListener("touchmove", onTouchMove);
+    document.removeEventListener("wheel", onWheel);
+    html.style.overflow = previous.htmlOverflow;
+    body.style.overflow = previous.bodyOverflow;
+    body.style.position = previous.bodyPosition;
+    body.style.top = previous.bodyTop;
+    body.style.left = previous.bodyLeft;
+    body.style.right = previous.bodyRight;
+    body.style.width = previous.bodyWidth;
+    window.scrollTo(0, scrollY);
+  };
+}
+
 export function QuickView({
   slug,
   href,
@@ -23,22 +91,30 @@ export function QuickView({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [host, setHost] = useState<HTMLElement | null>(null);
+  const ignoreClose = useRef(false);
   const [product, setProduct] = useState<QuickProduct | undefined>(undefined);
 
   useEffect(() => {
-    setHost(document.querySelector<HTMLElement>(".shop-app"));
-  }, []);
-
-  useEffect(() => {
     const dialog = dialogRef.current;
-    if (!host || !dialog) return;
+    if (!dialog) return;
     if (!dialog.open) dialog.showModal();
     dialog.querySelector<HTMLElement>("[data-close]")?.focus();
+    const release = freezePage(dialog);
     return () => {
-      if (dialog.open) dialog.close();
+      release();
+      if (!dialog.open) return;
+      ignoreClose.current = true;
+      dialog.close();
     };
-  }, [host]);
+  }, []);
+
+  function handleDialogClose() {
+    if (ignoreClose.current) {
+      ignoreClose.current = false;
+      return;
+    }
+    onClose();
+  }
 
   useEffect(() => {
     let cancel = false;
@@ -54,7 +130,7 @@ export function QuickView({
     };
   }, [slug]);
 
-  if (!host) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <dialog
@@ -62,7 +138,7 @@ export function QuickView({
       className="card quick-view"
       aria-labelledby={product ? titleId : undefined}
       aria-label={product ? undefined : "معاينة المنتج"}
-      onClose={onClose}
+      onClose={handleDialogClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -94,6 +170,6 @@ export function QuickView({
         ) : null}
       </div>
     </dialog>,
-    host,
+    document.body,
   );
 }

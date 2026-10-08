@@ -52,6 +52,7 @@ export function ProductPurchase({
   backHref?: string;
 }) {
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
+  const [qty, setQty] = useState("1");
   const [galleryVariantId, setGalleryVariantId] = useState(variants[0]?.id ?? "");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [state, action, pending] = useActionState(addToCartAction, null);
@@ -80,6 +81,67 @@ export function ProductPurchase({
 
   if (!variant) return <p>هذا المنتج لا يملك خيارات متاحة.</p>;
   const Title = titleTag;
+  const shownQty = Math.min(Math.max(1, Number(qty) || 1), Math.max(1, variant.stockQty));
+  const price = (
+    <p className="price text-lg">
+      {variant.compareAtPriceMinor && variant.compareAtPriceMinor > variant.priceMinor ? (
+        <s>{formatMinor(variant.compareAtPriceMinor, currency, minorUnit)}</s>
+      ) : null}
+      <span>{formatMinor(variant.priceMinor, currency, minorUnit)}</span>
+    </p>
+  );
+  const choices = (
+    <>
+      {shades.length > 0 ? (
+        <fieldset className="grid gap-2 border-0 p-0">
+          <legend className="quiet">الدرجة</legend>
+          <div className="flex flex-wrap gap-4">
+            {shades.map((shade) => {
+              const available = choiceInStock(shade, sizes.length > 0 ? (variant.sizeName ?? undefined) : undefined);
+              return (
+                <button
+                  key={shade}
+                  type="button"
+                  className={available ? "shade" : "shade is-unavailable"}
+                  aria-pressed={variant.shadeName === shade}
+                  onClick={() => choose({ shade })}
+                >
+                  {shade}
+                  {available ? "" : " · نفد"}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+      {sizes.length > 0 ? (
+        <fieldset className="grid gap-2 border-0 p-0">
+          <legend className="quiet">المقاس</legend>
+          <div className="flex flex-wrap gap-4">
+            {sizes.map((size) => {
+              const available = choiceInStock(shades.length > 0 ? (variant.shadeName ?? undefined) : undefined, size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  className={available ? "size-pick" : "size-pick is-unavailable"}
+                  aria-pressed={variant.sizeName === size}
+                  onClick={() => choose({ size })}
+                >
+                  {size}
+                  {available ? "" : " · نفد"}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+      <label className="grid max-w-28 gap-1">
+        <span className="quiet">الكمية</span>
+        <Stepper name="qty" value={String(shownQty)} onValue={setQty} min={1} max={Math.max(1, variant.stockQty)} label="الكمية" />
+      </label>
+    </>
+  );
 
   function choiceInStock(shade: string | undefined, size: string | undefined) {
     return variants.some(
@@ -108,7 +170,16 @@ export function ProductPurchase({
               العودة للنتائج
             </Link>
           ) : null}
-          <PlateImage key={active?.url} src={active?.url ?? null} alt={active?.alt || name} bare photo className="product-hero-img" />
+          <PlateImage
+            key={active?.url}
+            src={active?.url ?? null}
+            alt={active?.alt || name}
+            bare={surface !== "dialog"}
+            photo
+            preload={surface !== "dialog"}
+            sizes={surface === "dialog" ? "(max-width: 800px) 92vw, 24rem" : "(max-width: 800px) 92vw, 42vw"}
+            className="product-hero-img"
+          />
         </div>
         {gallery.length > 1 ? (
           <div className="product-gallery" role="group" aria-label="صور المنتج">
@@ -121,7 +192,7 @@ export function ProductPurchase({
                 aria-label={image.alt || name}
                 onClick={() => setActiveId(image.id)}
               >
-                <PlateImage src={image.url} alt="" className="product-thumb-img" />
+                <PlateImage src={image.url} alt="" sizes="7.25rem" className="product-thumb-img" />
               </button>
             ))}
           </div>
@@ -132,62 +203,10 @@ export function ProductPurchase({
         <Title className="product-title" id={titleId}>{name}</Title>
         {eyebrow ? <p className="quiet">{eyebrow}</p> : null}
         {description ? <p className="quiet max-w-md whitespace-pre-wrap">{description}</p> : null}
-        <p className="price text-lg">
-          {variant.compareAtPriceMinor && variant.compareAtPriceMinor > variant.priceMinor ? (
-            <s>{formatMinor(variant.compareAtPriceMinor, currency, minorUnit)}</s>
-          ) : null}
-          <span>{formatMinor(variant.priceMinor, currency, minorUnit)}</span>
-        </p>
+        {price}
         <p className="quiet">{variantLabel(variant.shadeName, variant.sizeName)}</p>
         {variant.stockQty > 0 ? null : <p>نفد المخزون</p>}
-        {shades.length > 0 ? (
-          <fieldset className="grid gap-2 border-0 p-0">
-            <legend className="quiet">الدرجة</legend>
-            <div className="flex flex-wrap gap-4">
-              {shades.map((shade) => {
-                const available = choiceInStock(shade, sizes.length > 0 ? (variant.sizeName ?? undefined) : undefined);
-                return (
-                  <button
-                    key={shade}
-                    type="button"
-                    className={available ? "shade" : "shade is-unavailable"}
-                    aria-pressed={variant.shadeName === shade}
-                    onClick={() => choose({ shade })}
-                  >
-                    {shade}
-                    {available ? "" : " · نفد"}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        ) : null}
-        {sizes.length > 0 ? (
-          <fieldset className="grid gap-2 border-0 p-0">
-            <legend className="quiet">المقاس</legend>
-            <div className="flex flex-wrap gap-4">
-              {sizes.map((size) => {
-                const available = choiceInStock(shades.length > 0 ? (variant.shadeName ?? undefined) : undefined, size);
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    className={available ? "size-pick" : "size-pick is-unavailable"}
-                    aria-pressed={variant.sizeName === size}
-                    onClick={() => choose({ size })}
-                  >
-                    {size}
-                    {available ? "" : " · نفد"}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        ) : null}
-        <label className="grid max-w-28 gap-1">
-          <span className="quiet">الكمية</span>
-          <Stepper name="qty" defaultValue={1} min={1} max={Math.max(1, variant.stockQty)} label="الكمية" />
-        </label>
+        {choices}
         {state?.error ? (
           <p className="alert" role="alert">
             {state.error}

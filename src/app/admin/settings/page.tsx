@@ -37,7 +37,7 @@ export default async function SettingsPage() {
         {settings?.logoUrl ? (
           <div className="grid gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={settings.logoUrl} alt="" className="h-16 w-auto object-contain" />
+            <img src={settings.logoUrl} alt="" className="h-16 w-auto object-contain" loading="lazy" decoding="async" />
             <Check name="removeLogo" value="yes">إزالة الشعار المصوّر</Check>
           </div>
         ) : null}

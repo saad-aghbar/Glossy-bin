@@ -19,7 +19,7 @@ export function Pagination({
   return (
     <nav className="mt-8 flex items-center justify-center gap-3" aria-label="الصفحات">
       {page > 1 ? (
-        <Link className="btn btn-ghost" href={href(page - 1)}>
+        <Link className="btn btn-ghost" href={href(page - 1)} prefetch={false}>
           السابق
         </Link>
       ) : (
@@ -29,7 +29,7 @@ export function Pagination({
         صفحة {page} من {pages}
       </span>
       {page < pages ? (
-        <Link className="btn btn-ghost" href={href(page + 1)}>
+        <Link className="btn btn-ghost" href={href(page + 1)} prefetch={false}>
           التالي
         </Link>
       ) : (

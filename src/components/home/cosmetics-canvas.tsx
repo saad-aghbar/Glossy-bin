@@ -1,12 +1,12 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Component, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { PCFShadowMap, SRGBColorSpace } from "three";
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { PCFShadowMap, SRGBColorSpace, type WebGLRenderer } from "three";
 import { CosmeticsScene } from "./cosmetics-scene";
 import { heroBridge } from "./hero-bridge";
 import { detectQuality } from "./quality";
-import { narrowBreak, tierDetail, type QualityTier } from "./scene-config";
+import { castShadows, narrowBreak, pixelRatioCap, type QualityTier } from "./scene-config";
 
 class SceneBoundary extends Component<{ children: ReactNode; onError: () => void }, { failed: boolean }> {
   state = { failed: false };
@@ -24,97 +24,82 @@ class SceneBoundary extends Component<{ children: ReactNode; onError: () => void
   }
 }
 
-class SupportGate extends Component<{ children: ReactNode; onFail: () => void }, { ok: boolean }> {
-  state = { ok: true };
+export function CosmeticsCanvas({ onFail, onReady, ready }: { onFail: () => void; onReady: () => void; ready: boolean }) {
+  const failRef = useRef(onFail);
+  const readyRef = useRef(onReady);
+  useEffect(() => {
+    failRef.current = onFail;
+    readyRef.current = onReady;
+  }, [onFail, onReady]);
+  const [support] = useState(detectQuality);
+  const [tier, setTier] = useState<QualityTier>(() => (support === "fallback" ? "low" : support));
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.innerWidth < narrowBreak);
+  const [antialias] = useState(() => support !== "fallback" && support !== "low");
 
-  componentDidMount() {
-    if (detectQuality() === "fallback") {
-      this.setState({ ok: false });
-      this.props.onFail();
-    }
-  }
+  useEffect(() => {
+    if (support === "fallback") failRef.current();
+  }, [support]);
 
-  render() {
-    return this.state.ok ? this.props.children : null;
-  }
-}
-
-function pixelRatioCap(tier: QualityTier, width: number) {
-  const max = tierDetail[tier].dprMax;
-  return width < narrowBreak ? Math.min(max, 1.5) : max;
-}
-
-export function CosmeticsCanvas({ onFail }: { onFail: () => void }) {
-  const host = useRef<HTMLDivElement>(null);
-  const [tier, setTier] = useState<QualityTier>(() => {
-    const detected = detectQuality();
-    return detected === "fallback" ? "low" : detected;
-  });
-  const [box, setBox] = useState({ width: 0, height: 0 });
-
-  useLayoutEffect(() => {
-    const node = host.current;
-    if (!node) return;
-    const sync = () => {
-      const width = node.clientWidth;
-      const height = node.clientHeight;
-      if (!width || !height) return;
-      setBox((current) => (current.width === width && current.height === height ? current : { width, height }));
-    };
+  useEffect(() => {
+    if (support === "fallback") return;
+    const media = window.matchMedia(`(max-width: ${narrowBreak - 1}px)`);
+    const sync = () => setNarrow(media.matches);
     sync();
-    const observer = new ResizeObserver(sync);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [support]);
 
-  const detail = tierDetail[tier];
-  const dprMax = pixelRatioCap(tier, box.width || (typeof window === "undefined" ? 1280 : window.innerWidth));
+  const shadows = castShadows(tier, narrow);
+  const dprMax = pixelRatioCap(tier, narrow);
+  const gl = useMemo(
+    () => ({
+      antialias,
+      alpha: true,
+      powerPreference: "high-performance" as const,
+      failIfMajorPerformanceCaveat: false,
+    }),
+    [antialias],
+  );
+
+  if (support === "fallback") return <div className="cosmetics-canvas" aria-hidden />;
 
   return (
-    <div ref={host} className="cosmetics-canvas" aria-hidden>
-      {box.width > 0 && box.height > 0 ? (
-        <SceneBoundary onError={onFail}>
-          <SupportGate onFail={onFail}>
-            <Canvas
-              key={`${box.width}x${box.height}`}
-              dpr={[1, dprMax]}
-              frameloop="always"
-              shadows={detail.shadow}
-              resize={{ scroll: false, debounce: 0 }}
-              camera={{ fov: 32, position: [0.04, 0.86, 5.45], near: 0.05, far: 30 }}
-              gl={{
-                antialias: tier !== "low",
-                alpha: true,
-                powerPreference: "high-performance",
-                failIfMajorPerformanceCaveat: false,
-              }}
-              style={{
-                pointerEvents: "none",
-                background: "transparent",
-                width: box.width,
-                height: box.height,
-              }}
-              onCreated={({ gl, setSize }) => {
-                gl.outputColorSpace = SRGBColorSpace;
-                gl.shadowMap.type = PCFShadowMap;
-                gl.setClearColor(0x000000, 0);
-                setSize(box.width, box.height);
-                gl.setSize(box.width, box.height, false);
-                gl.domElement.style.background = "transparent";
-                gl.domElement.style.pointerEvents = "none";
-                gl.domElement.addEventListener("webglcontextlost", (event) => {
-                  event.preventDefault();
-                  onFail();
-                });
-              }}
-            >
-              <CosmeticsScene tier={tier} onTier={setTier} />
-            </Canvas>
-          </SupportGate>
+    <div className={ready ? "cosmetics-canvas is-ready" : "cosmetics-canvas"} aria-hidden>
+      <Canvas
+        dpr={[1, dprMax]}
+        frameloop="demand"
+        shadows={shadows}
+        resize={{ scroll: false, debounce: 0 }}
+        camera={{ fov: 32, position: [0.04, 0.86, 5.45], near: 0.05, far: 30 }}
+        gl={gl}
+        style={{
+          pointerEvents: "none",
+          background: "transparent",
+          width: "100%",
+          height: "100%",
+        }}
+        onCreated={({ gl: renderer }) => {
+          prepareRenderer(renderer);
+          renderer.domElement.addEventListener("webglcontextlost", (event) => {
+            event.preventDefault();
+            failRef.current();
+          });
+        }}
+      >
+        <SceneBoundary onError={() => failRef.current()}>
+          <CosmeticsScene tier={tier} shadows={shadows} onTier={setTier} onReady={() => readyRef.current()} />
         </SceneBoundary>
-      ) : null}
+      </Canvas>
     </div>
   );
+}
+
+function prepareRenderer(gl: WebGLRenderer) {
+  gl.outputColorSpace = SRGBColorSpace;
+  gl.shadowMap.type = PCFShadowMap;
+  gl.setClearColor(0x000000, 0);
+  gl.domElement.style.background = "transparent";
+  gl.domElement.style.pointerEvents = "none";
 }
 
 export function readSceneStats() {

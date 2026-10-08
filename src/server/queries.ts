@@ -123,7 +123,7 @@ export async function listProducts(input: {
   limit: number;
 }) {
   const where = catalogWhere(input);
-  const rows = await db
+  const rowsQuery = db
     .select({
       id: product.id,
       name: product.name,
@@ -144,30 +144,26 @@ export async function listProducts(input: {
     )
     .limit(input.limit)
     .offset(input.offset);
-
-  const [{ total }] = await db
+  const totalQuery = db
     .select({ total: sql<number>`count(*)::int` })
     .from(product)
     .leftJoin(category, eq(category.id, product.categoryId))
     .leftJoin(brand, eq(brand.id, product.brandId))
     .where(where);
+  const [rows, counted] = await Promise.all([rowsQuery, totalQuery]);
+  const [{ total }] = counted;
 
   const ids = rows.map((row) => row.id);
-  const variants =
+  const [variants, images] =
     ids.length === 0
-      ? []
-      : await db
-          .select()
-          .from(productVariant)
-          .where(and(inArray(productVariant.productId, ids), eq(productVariant.isActive, true)));
-  const images =
-    ids.length === 0
-      ? []
-      : await db
-          .select()
-          .from(productImage)
-          .where(inArray(productImage.productId, ids))
-          .orderBy(asc(productImage.sortOrder));
+      ? [[], []]
+      : await Promise.all([
+          db
+            .select()
+            .from(productVariant)
+            .where(and(inArray(productVariant.productId, ids), eq(productVariant.isActive, true))),
+          db.select().from(productImage).where(inArray(productImage.productId, ids)).orderBy(asc(productImage.sortOrder)),
+        ]);
 
   const cards = rows.map((row) => {
     const productVariants = variants.filter((item) => item.productId === row.id);

@@ -18,6 +18,7 @@ export function ProductCard({
   currency,
   minorUnit,
   inStock,
+  preload = false,
 }: {
   slug: string;
   href: string;
@@ -30,6 +31,7 @@ export function ProductCard({
   currency: string;
   minorUnit: number;
   inStock: boolean;
+  preload?: boolean;
 }) {
   const anchor = useRef<HTMLDivElement>(null);
   const timer = useRef<number | null>(null);
@@ -90,7 +92,7 @@ export function ProductCard({
             }}
           >
             <span className="product-peek-photo">
-              <PlateImage src={imageUrl} alt="" bare className="product-peek-img" />
+              <PlateImage src={imageUrl} alt="" bare className="product-peek-img" sizes="224px" />
             </span>
             {category ? <span className="product-kicker">{category}</span> : null}
             <span className="product-peek-name">{name}</span>
@@ -115,7 +117,14 @@ export function ProductCard({
       <button type="button" className="product-tile" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         <p className="product-kicker">{category}</p>
         <div className="product-photo">
-          <PlateImage src={imageUrl} alt={imageAlt || name} bare className="product-photo-img" />
+          <PlateImage
+            src={imageUrl}
+            alt={imageAlt || name}
+            bare
+            preload={preload}
+            sizes="(max-width: 900px) 72vw, 280px"
+            className="product-photo-img"
+          />
         </div>
         <div className="product-copy">
           <h2>{name}</h2>

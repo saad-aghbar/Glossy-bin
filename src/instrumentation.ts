@@ -3,7 +3,20 @@ export async function register() {
     const { ServerResponse } = await import("node:http");
     const setHeader = ServerResponse.prototype.setHeader;
     ServerResponse.prototype.setHeader = function (name: string, value: number | string | readonly string[]) {
-      if (String(name).toLowerCase() === "cache-control" && String(value).includes("no-cache") && !String(value).includes("no-store")) {
+      const url = "req" in this && this.req && typeof this.req === "object" && "url" in this.req ? String(this.req.url) : "";
+      const pathname = url.split("?")[0] ?? "";
+      const asset =
+        pathname.startsWith("/_next/static/") ||
+        pathname.startsWith("/uploads/") ||
+        pathname.startsWith("/models/") ||
+        pathname.startsWith("/hero/") ||
+        pathname.startsWith("/fluid/");
+      if (
+        !asset &&
+        String(name).toLowerCase() === "cache-control" &&
+        String(value).includes("no-cache") &&
+        !String(value).includes("no-store")
+      ) {
         this.setHeader("Clear-Site-Data", '"cache"');
         value = "no-store, no-cache, must-revalidate, max-age=0";
       }

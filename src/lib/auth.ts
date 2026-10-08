@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { trustedAuthOrigins } from "./auth-origins";
 import { claimUserCommerce } from "./claim";
 import { appBaseUrl, sendPasswordReset, sendVerificationEmail } from "./email";
 
@@ -24,7 +25,7 @@ export const authRateLimit = {
 export const auth = betterAuth({
   secret,
   baseURL,
-  trustedOrigins: [baseURL],
+  trustedOrigins: trustedAuthOrigins(baseURL, process.env.NODE_ENV, process.env.AUTH_TRUSTED_ORIGINS),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

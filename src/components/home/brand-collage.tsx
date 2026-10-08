@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlateImage } from "@/components/ui";
 
 type Tile = {
   slot: number;
@@ -18,10 +19,8 @@ export function BrandCollage({ tiles }: { tiles: Tile[] }) {
   return (
     <section className="card brand-collage" aria-label="كولاج العلامات">
       {tiles.map((tile) => (
-        <Link key={tile.slot} className={tile.slot % 3 === 0 ? "is-full" : "is-half"} href={collageHref(tile)}>
-          {/* Uploaded collage photos are not known at build time. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={tile.imageUrl} alt="" />
+        <Link key={tile.slot} prefetch={false} className={tile.slot % 3 === 0 ? "is-full" : "is-half"} href={collageHref(tile)}>
+          <PlateImage src={tile.imageUrl} alt="" bare sizes={tile.slot % 3 === 0 ? "100vw" : "50vw"} className="brand-collage-img" />
         </Link>
       ))}
     </section>

@@ -32,7 +32,7 @@ export default async function HeroStackPage({
               <a className="flex items-center gap-3" href={`/admin/stack?id=${row.id}`}>
                 {/* Admin preview of an uploaded stack photo. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={row.imageUrl} alt="" width={48} height={64} />
+                <img src={row.imageUrl} alt="" width={48} height={64} loading="lazy" decoding="async" />
                 <span>
                   صورة {index + 1}
                   <span className="block text-sm text-muted">{row.isActive ? "ظاهرة" : "متوقفة"}</span>

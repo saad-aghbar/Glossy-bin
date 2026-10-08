@@ -203,7 +203,8 @@ function Drawer({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    setHost(document.querySelector(".shop-app"));
+    const root = document.querySelector(".shop-app");
+    setHost(root instanceof HTMLElement ? root : null);
   }, []);
 
   function revealCurrent() {

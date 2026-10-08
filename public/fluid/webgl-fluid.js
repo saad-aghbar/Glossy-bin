@@ -42,6 +42,8 @@ function resizeCanvas() {
 
 function scaleByPixelRatio(input) {
   let pixelRatio = window.devicePixelRatio || 1;
+  const cap = Number(canvas.dataset.dprCap);
+  if (cap > 0) pixelRatio = Math.min(pixelRatio, cap);
   return Math.floor(input * pixelRatio);
 }
 
