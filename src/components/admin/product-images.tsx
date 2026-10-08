@@ -10,7 +10,7 @@ import {
   reorderImagesAction,
 } from "@/server/actions/catalog";
 
-type ImageItem = { id: string; url: string; alt: string | null };
+type ImageItem = { id: string; url: string; alt: string | null; variantLabel: string };
 
 export function ProductImages({
   productId,
@@ -54,6 +54,7 @@ export function ProductImages({
           onDragEnd={() => setDragIndex(null)}
         >
           <PlateImage src={image.url} alt={image.alt || productName} className="aspect-square w-full object-cover" />
+          <p className="text-sm">{image.variantLabel}</p>
           <p className="text-sm">{index === 0 ? "الصورة الرئيسية" : image.alt || "صورة إضافية"}</p>
           <div className="flex flex-wrap gap-2">
             {index === 0 ? null : (

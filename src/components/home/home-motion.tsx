@@ -6,10 +6,12 @@ import { ScrollHero } from "./scroll-hero";
 export function HomeExperience({
   storeName,
   heading,
+  stackImages,
   children,
 }: {
   storeName: string;
   heading: string;
+  stackImages: string[];
   children: ReactNode;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,7 @@ export function HomeExperience({
 
   return (
     <div ref={rootRef}>
-      <ScrollHero storeName={storeName} heading={heading} />
+      <ScrollHero storeName={storeName} heading={heading} stackImages={stackImages} />
       {children}
     </div>
   );

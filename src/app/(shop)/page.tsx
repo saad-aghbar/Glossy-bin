@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { BrandCollage } from "@/components/home/brand-collage";
+import { ImageRibbon } from "@/components/home/image-ribbon";
 import { HomeExperience } from "@/components/home/home-motion";
 import { heroCopy } from "@/components/home/scene-config";
 import { ProductCard } from "@/components/product-card";
 import { storeTagline } from "@/lib/brand";
-import { listActiveCategories, listActiveOffers, listProducts, getSettings } from "@/server/queries";
+import { listActiveCategories, listActiveHeroStack, listActiveOffers, listActiveRibbons, listHomeCollage, listProducts, getSettings } from "@/server/queries";
 
 function ProductRail({
   title,
@@ -31,6 +33,7 @@ function ProductRail({
         {cards.map((item) => (
           <ProductCard
             key={item.id}
+            slug={item.slug}
             href={`/products/${item.slug}`}
             name={item.name}
             imageUrl={item.imageUrl}
@@ -49,9 +52,12 @@ function ProductRail({
 }
 
 export default async function HomePage() {
-  const [settings, offers, categories, featured, newest] = await Promise.all([
+  const [settings, offers, ribbons, collage, stack, categories, featured, newest] = await Promise.all([
     getSettings(),
     listActiveOffers(),
+    listActiveRibbons(),
+    listHomeCollage(),
+    listActiveHeroStack(),
     listActiveCategories(),
     listProducts({ featuredOnly: true, publishedOnly: true, offset: 0, limit: 8 }),
     listProducts({ newest: true, publishedOnly: true, offset: 0, limit: 8 }),
@@ -61,7 +67,7 @@ export default async function HomePage() {
   const offer = offers[0];
   const tagline = storeTagline(settings?.tagline) || heroCopy.headingFallback;
   return (
-    <HomeExperience storeName={settings?.storeName || "Glossy"} heading={tagline}>
+    <HomeExperience storeName={settings?.storeName || "Glossy"} heading={tagline} stackImages={stack.map((row) => row.imageUrl)}>
       <div id="shop">
       {categories.length > 0 ? (
         <nav className="category-row" aria-label="التصنيفات">
@@ -79,12 +85,21 @@ export default async function HomePage() {
           <span className="text-link">شاهدي</span>
         </Link>
       ) : null}
+      <BrandCollage tiles={collage} />
       <ProductRail
         title="مختارات"
         href="/products?featured=1"
         cards={featured.cards}
         currency={currency}
         minorUnit={minorUnit}
+      />
+      <ImageRibbon
+        slides={ribbons.map((row) => ({
+          id: row.id,
+          imageUrl: row.imageUrl,
+          linkUrl: row.linkUrl,
+          buttonLabel: row.buttonLabel,
+        }))}
       />
       <ProductRail
         title="وصل حديثاً"

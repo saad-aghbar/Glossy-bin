@@ -5,10 +5,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
+  brand,
+  category,
   contactMessage,
   contentPage,
   deliveryZone,
   discountCode,
+  heroStackImage,
+  homeCollageTile,
+  homeRibbon,
   offer,
   storeSetting,
   user,
@@ -78,6 +83,130 @@ export async function saveOfferAction(_state: ActionState, formData: FormData): 
   }
   revalidatePath("/");
   redirect("/admin/offers");
+}
+
+export async function saveRibbonAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const id = field(formData, "id");
+  const buttonLabel = field(formData, "buttonLabel") || "شاهدي";
+  if (buttonLabel.length > 24) return { error: "نص الزر طويل" };
+  let imageUrl = field(formData, "existingImage");
+  const file = formData.get("image");
+  try {
+    if (file instanceof File && file.size > 0) imageUrl = await saveProductImage(file);
+    if (!imageUrl) return { error: "الصورة مطلوبة" };
+    const values = {
+      imageUrl,
+      linkUrl: offerLink(field(formData, "linkUrl")),
+      buttonLabel,
+      isActive: flag(formData, "isActive"),
+      sortOrder: Number.parseInt(field(formData, "sortOrder") || "0", 10) || 0,
+      updatedAt: new Date(),
+    };
+    if (id) {
+      await db.update(homeRibbon).set(values).where(eq(homeRibbon.id, id));
+    } else {
+      await db.insert(homeRibbon).values({ id: newId(), ...values });
+    }
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    return { error: actionError(error, "تعذر حفظ الصورة") };
+  }
+  revalidatePath("/");
+  redirect("/admin/ribbons");
+}
+
+export async function deleteRibbonAction(formData: FormData) {
+  await requireAdmin();
+  const id = field(formData, "id");
+  const [row] = await db.select({ imageUrl: homeRibbon.imageUrl }).from(homeRibbon).where(eq(homeRibbon.id, id)).limit(1);
+  await db.delete(homeRibbon).where(eq(homeRibbon.id, id));
+  if (row?.imageUrl) await deleteStoredImage(row.imageUrl);
+  revalidatePath("/");
+  redirect("/admin/ribbons");
+}
+
+export async function saveHeroStackAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const id = field(formData, "id");
+  let imageUrl = field(formData, "existingImage");
+  const file = formData.get("image");
+  try {
+    if (file instanceof File && file.size > 0) imageUrl = await saveProductImage(file);
+    if (!imageUrl) return { error: "الصورة مطلوبة" };
+    const values = {
+      imageUrl,
+      isActive: flag(formData, "isActive"),
+      sortOrder: Number.parseInt(field(formData, "sortOrder") || "0", 10) || 0,
+      updatedAt: new Date(),
+    };
+    if (id) {
+      await db.update(heroStackImage).set(values).where(eq(heroStackImage.id, id));
+    } else {
+      await db.insert(heroStackImage).values({ id: newId(), ...values });
+    }
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    return { error: actionError(error, "تعذر حفظ الصورة") };
+  }
+  revalidatePath("/");
+  redirect("/admin/stack");
+}
+
+export async function deleteHeroStackAction(formData: FormData) {
+  await requireAdmin();
+  const id = field(formData, "id");
+  const [row] = await db.select({ imageUrl: heroStackImage.imageUrl }).from(heroStackImage).where(eq(heroStackImage.id, id)).limit(1);
+  await db.delete(heroStackImage).where(eq(heroStackImage.id, id));
+  if (row?.imageUrl) await deleteStoredImage(row.imageUrl);
+  revalidatePath("/");
+  redirect("/admin/stack");
+}
+
+function collagePath(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.includes("\\") || trimmed.includes("://")) {
+    throw new Error("المسار يجب أن يبدأ بـ /");
+  }
+  return trimmed;
+}
+
+export async function saveCollageTileAction(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const slot = Number.parseInt(field(formData, "slot"), 10);
+  const kind = field(formData, "targetKind");
+  if (!Number.isInteger(slot) || slot < 0 || slot > 6) return { error: "مكان الصورة غير صالح" };
+  if (kind !== "brand" && kind !== "category" && kind !== "page") return { error: "وجهة الضغط غير صالحة" };
+  let imageUrl = field(formData, "existingImage");
+  const file = formData.get("image");
+  try {
+    if (file instanceof File && file.size > 0) imageUrl = await saveProductImage(file);
+    if (!imageUrl) return { error: "الصورة مطلوبة" };
+    let targetValue = "";
+    if (kind === "brand") {
+      targetValue = field(formData, "brandSlug");
+      const [row] = await db.select({ id: brand.id }).from(brand).where(eq(brand.slug, targetValue)).limit(1);
+      if (!row) return { error: "اختاري علامة" };
+    } else if (kind === "category") {
+      targetValue = field(formData, "categorySlug");
+      const [row] = await db.select({ id: category.id }).from(category).where(eq(category.slug, targetValue)).limit(1);
+      if (!row) return { error: "اختاري تصنيفاً" };
+    } else {
+      targetValue = collagePath(field(formData, "path"));
+    }
+    const values = { imageUrl, targetKind: kind, targetValue, updatedAt: new Date() };
+    const [existing] = await db.select({ id: homeCollageTile.id }).from(homeCollageTile).where(eq(homeCollageTile.slot, slot)).limit(1);
+    if (existing) {
+      await db.update(homeCollageTile).set(values).where(eq(homeCollageTile.id, existing.id));
+    } else {
+      await db.insert(homeCollageTile).values({ id: newId(), slot, ...values });
+    }
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    return { error: actionError(error, "تعذر حفظ الصورة") };
+  }
+  revalidatePath("/");
+  redirect(`/admin/collage?slot=${slot}`);
 }
 
 export async function deleteOfferAction(formData: FormData) {

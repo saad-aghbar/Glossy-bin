@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { usePinnedPopover } from "@/components/controls/use-pinned-popover";
 import { createPortal } from "react-dom";
 
 export type ShopLink = { href: string; label: string; exact?: boolean };
@@ -38,6 +39,7 @@ function ShopMenu({
   const closeTimer = useRef<number | null>(null);
   const fine = useRef(false);
   const current = group.links.some((link) => isCurrent(pathname, search, link));
+  usePinnedPopover(open, item);
 
   function showMenu() {
     if (closeTimer.current) window.clearTimeout(closeTimer.current);

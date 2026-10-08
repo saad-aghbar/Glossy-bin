@@ -10,6 +10,9 @@ import {
   customerOrder,
   deliveryZone,
   discountCode,
+  heroStackImage,
+  homeCollageTile,
+  homeRibbon,
   offer,
   product,
   productImage,
@@ -48,6 +51,28 @@ export async function listActiveBrands() {
     .from(brand)
     .where(eq(brand.isActive, true))
     .orderBy(asc(brand.sortOrder), asc(brand.name));
+}
+
+export async function listHomeCollage() {
+  const rows = await db.select().from(homeCollageTile).orderBy(asc(homeCollageTile.slot));
+  if (rows.length !== 7 || rows.some((row, index) => row.slot !== index || !row.imageUrl)) return [];
+  return rows;
+}
+
+export async function listActiveRibbons() {
+  return db
+    .select()
+    .from(homeRibbon)
+    .where(and(eq(homeRibbon.isActive, true), sql`${homeRibbon.imageUrl} <> ''`))
+    .orderBy(asc(homeRibbon.sortOrder), desc(homeRibbon.createdAt));
+}
+
+export async function listActiveHeroStack() {
+  return db
+    .select()
+    .from(heroStackImage)
+    .where(and(eq(heroStackImage.isActive, true), sql`${heroStackImage.imageUrl} <> ''`))
+    .orderBy(asc(heroStackImage.sortOrder), desc(heroStackImage.createdAt));
 }
 
 export async function listActiveOffers() {

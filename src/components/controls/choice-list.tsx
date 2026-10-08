@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { usePinnedPopover } from "@/components/controls/use-pinned-popover";
 
 export type Choice = { value: string; label: string };
 
@@ -20,6 +21,7 @@ export function ChoiceList({
   const root = useRef<HTMLDivElement>(null);
   const listId = useId();
   const current = options.find((option) => option.value === value);
+  usePinnedPopover(open, root);
 
   useEffect(() => {
     if (!open) return;

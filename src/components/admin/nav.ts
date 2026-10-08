@@ -2,7 +2,7 @@ export type AdminLink = {
   href: string;
   label: string;
   exact?: boolean;
-  icon: "home" | "products" | "orders" | "customers" | "discount" | "truck" | "category" | "brand" | "offer" | "pages" | "mail" | "settings";
+  icon: "home" | "products" | "orders" | "customers" | "discount" | "truck" | "category" | "brand" | "offer" | "ribbon" | "collage" | "stack" | "pages" | "mail" | "settings";
 };
 
 export const adminGroups: Array<{ id: string; label: string; links: AdminLink[] }> = [
@@ -29,6 +29,9 @@ export const adminGroups: Array<{ id: string; label: string; links: AdminLink[] 
       { href: "/admin/categories", label: "التصنيفات", icon: "category" },
       { href: "/admin/brands", label: "العلامات", icon: "brand" },
       { href: "/admin/offers", label: "العروض", icon: "offer" },
+      { href: "/admin/ribbons", label: "الشريط", icon: "ribbon" },
+      { href: "/admin/stack", label: "المكدس", icon: "stack" },
+      { href: "/admin/collage", label: "الكولاج", icon: "collage" },
       { href: "/admin/pages", label: "الصفحات", icon: "pages" },
       { href: "/admin/messages", label: "الرسائل", icon: "mail" },
     ],
@@ -51,6 +54,9 @@ export const adminCrumbs: Record<string, string> = {
   categories: "التصنيفات",
   brands: "العلامات",
   offers: "العروض",
+  ribbons: "الشريط",
+  stack: "المكدس",
+  collage: "الكولاج",
   pages: "الصفحات",
   messages: "الرسائل",
   settings: "الإعدادات",

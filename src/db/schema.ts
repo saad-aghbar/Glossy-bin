@@ -247,6 +247,40 @@ export const discountCode = pgTable("discount_code", {
   updatedAt: updatedAt(),
 });
 
+export const homeRibbon = pgTable("home_ribbon", {
+  id: text("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  linkUrl: text("link_url"),
+  buttonLabel: text("button_label").notNull().default("شاهدي"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const heroStackImage = pgTable("hero_stack_image", {
+  id: text("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const homeCollageTile = pgTable(
+  "home_collage_tile",
+  {
+    id: text("id").primaryKey(),
+    slot: integer("slot").notNull(),
+    imageUrl: text("image_url").notNull(),
+    targetKind: text("target_kind").notNull(),
+    targetValue: text("target_value").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("home_collage_tile_slot_unique").on(table.slot)],
+);
+
 export const offer = pgTable("offer", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),

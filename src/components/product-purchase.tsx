@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useActionState } from "react";
+import Link from "next/link";
 import { Stepper } from "@/components/controls/stepper";
-import { PlateImage, RosePlate } from "@/components/ui";
+import { PlateImage } from "@/components/ui";
 import { formatMinor } from "@/lib/money";
 import { variantLabel } from "@/lib/labels";
 import { addToCartAction } from "@/server/actions/cart";
@@ -33,6 +34,10 @@ export function ProductPurchase({
   images,
   currency,
   minorUnit,
+  titleTag = "h1",
+  titleId,
+  surface = "page",
+  backHref,
 }: {
   name: string;
   description: string;
@@ -41,6 +46,10 @@ export function ProductPurchase({
   images: Image[];
   currency: string;
   minorUnit: number;
+  titleTag?: "h1" | "h2";
+  titleId?: string;
+  surface?: "page" | "dialog";
+  backHref?: string;
 }) {
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [galleryVariantId, setGalleryVariantId] = useState(variants[0]?.id ?? "");
@@ -70,6 +79,7 @@ export function ProductPurchase({
   const active = gallery.find((image) => image.id === activeId) ?? gallery[0];
 
   if (!variant) return <p>هذا المنتج لا يملك خيارات متاحة.</p>;
+  const Title = titleTag;
 
   function choiceInStock(shade: string | undefined, size: string | undefined) {
     return variants.some(
@@ -90,15 +100,18 @@ export function ProductPurchase({
   }
 
   return (
-    <div className="product-split grid items-start gap-8 py-8">
-      <div className="grid gap-2">
-        {active ? (
-          <PlateImage key={active.url} src={active.url} alt={active.alt || name} photo />
-        ) : (
-          <RosePlate name={name} />
-        )}
+    <div className={surface === "dialog" ? "product-split is-dialog" : "product-split"}>
+      <div className="product-media">
+        <div className="product-hero">
+          {backHref ? (
+            <Link className="product-back" href={backHref}>
+              العودة للنتائج
+            </Link>
+          ) : null}
+          <PlateImage key={active?.url} src={active?.url ?? null} alt={active?.alt || name} bare photo className="product-hero-img" />
+        </div>
         {gallery.length > 1 ? (
-          <div className="grid grid-cols-4 gap-2" role="group" aria-label="صور المنتج">
+          <div className="product-gallery" role="group" aria-label="صور المنتج">
             {gallery.map((image) => (
               <button
                 key={image.id}
@@ -108,15 +121,15 @@ export function ProductPurchase({
                 aria-label={image.alt || name}
                 onClick={() => setActiveId(image.id)}
               >
-                <PlateImage src={image.url} alt="" className="plate w-full object-cover" />
+                <PlateImage src={image.url} alt="" className="product-thumb-img" />
               </button>
             ))}
           </div>
         ) : null}
       </div>
-      <form action={action} className="grid content-start gap-5 md:pt-6">
+      <form action={action} className={surface === "dialog" ? "product-buy" : "card product-buy"}>
         <input type="hidden" name="variantId" value={variant.id} />
-        <h1 className="m-0 text-3xl font-normal md:text-4xl">{name}</h1>
+        <Title className="product-title" id={titleId}>{name}</Title>
         {eyebrow ? <p className="quiet">{eyebrow}</p> : null}
         {description ? <p className="quiet max-w-md whitespace-pre-wrap">{description}</p> : null}
         <p className="price text-lg">

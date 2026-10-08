@@ -23,7 +23,10 @@ export async function readCart() {
         items: {
           with: {
             variant: {
-              with: { product: true },
+              with: {
+                images: true,
+                product: { with: { images: true } },
+              },
             },
           },
         },
@@ -38,7 +41,12 @@ export async function readCart() {
     with: {
       items: {
         with: {
-          variant: { with: { product: true } },
+          variant: {
+            with: {
+              images: true,
+              product: { with: { images: true } },
+            },
+          },
         },
       },
     },
@@ -145,4 +153,20 @@ export async function removeCartItem(itemId: string) {
   const active = await readCart();
   if (!active) return;
   await db.delete(cartItem).where(and(eq(cartItem.id, itemId), eq(cartItem.cartId, active.id)));
+}
+
+type CartPhoto = { url: string; alt: string; sortOrder: number; variantId: string | null };
+
+export function cartLineImage(variant: {
+  images: CartPhoto[];
+  product: { name: string; images: CartPhoto[] };
+}) {
+  const own = [...variant.images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
+  if (own) return { url: own.url, alt: own.alt || variant.product.name };
+  const shared = [...variant.product.images]
+    .filter((image) => !image.variantId)
+    .sort((a, b) => a.sortOrder - b.sortOrder)[0];
+  const fallback = shared ?? [...variant.product.images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
+  if (!fallback) return null;
+  return { url: fallback.url, alt: fallback.alt || variant.product.name };
 }

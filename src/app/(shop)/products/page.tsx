@@ -84,6 +84,7 @@ export default async function ProductsPage({
           {result.cards.map((item) => (
             <ProductCard
               key={item.id}
+              slug={item.slug}
               href={`/products/${item.slug}?from=${encodeURIComponent(from)}`}
               name={item.name}
               imageUrl={item.imageUrl}

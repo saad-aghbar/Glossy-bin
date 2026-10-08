@@ -11,7 +11,15 @@ const CosmeticsCanvas = dynamic(() => import("./cosmetics-canvas").then((mod) =>
   ssr: false,
 });
 
-export function ScrollHero({ storeName, heading }: { storeName: string; heading: string }) {
+export function ScrollHero({
+  storeName,
+  heading,
+  stackImages,
+}: {
+  storeName: string;
+  heading: string;
+  stackImages: string[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const preference = useSyncExternalStore(subscribeHeroPreference, readHeroPreference, () => "scene" as const);
   const [failed, setFailed] = useState(false);
@@ -73,19 +81,19 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
   if (mode !== "scene") {
     return (
       <section className="scroll-hero is-still" aria-label="مقدمة المتجر">
-        <StaticHero storeName={storeName} heading={heading} />
-        {mode === "still" && !heroMotionLocked() ? (
-          <button
-            className="hero-still"
-            type="button"
-            onClick={() => {
-              setFailed(false);
-              setHeroStill(false);
-            }}
-          >
-            {heroCopy.motion}
-          </button>
-        ) : null}
+        <StaticHero
+          storeName={storeName}
+          heading={heading}
+          images={stackImages}
+          onRestore={
+            heroMotionLocked()
+              ? undefined
+              : () => {
+                  setFailed(false);
+                  setHeroStill(false);
+                }
+          }
+        />
       </section>
     );
   }
@@ -113,16 +121,18 @@ export function ScrollHero({ storeName, heading }: { storeName: string; heading:
               {heroCopy.shop}
             </a>
           </div>
-          <a className="hero-skip" href="#shop">
-            {heroCopy.skip}
-          </a>
-          <button
-            className="hero-still"
-            type="button"
-            onClick={() => setHeroStill(true)}
-          >
-            {heroCopy.still}
-          </button>
+          <div className="hero-actions">
+            <a className="hero-skip" href="#shop">
+              {heroCopy.skip}
+            </a>
+            <button
+              className="hero-still"
+              type="button"
+              onClick={() => setHeroStill(true)}
+            >
+              {heroCopy.still}
+            </button>
+          </div>
         </div>
       </div>
     </section>

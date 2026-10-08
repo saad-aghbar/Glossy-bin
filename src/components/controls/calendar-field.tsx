@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { usePinnedPopover } from "@/components/controls/use-pinned-popover";
 import { jerusalemParts } from "@/lib/dates";
 
 const WEEK = ["سبت", "أحد", "إثن", "ثلا", "أرب", "خمي", "جمع"];
@@ -52,6 +53,7 @@ export function CalendarField({
   const root = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const shown = labelFor(parts.year, parts.month, parts.day);
+  usePinnedPopover(open, root);
 
   useEffect(() => {
     if (!open) return;

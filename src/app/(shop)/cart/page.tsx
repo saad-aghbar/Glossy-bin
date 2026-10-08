@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Stepper } from "@/components/controls/stepper";
-import { PendingButton, RosePlate } from "@/components/ui";
+import { PendingButton, PlateImage } from "@/components/ui";
 import { removeCartAction, updateCartAction } from "@/server/actions/cart";
+import { cartLineImage, readCart } from "@/lib/cart";
 import { describeCartLine } from "@/lib/cart-lines";
-import { formatMinor } from "@/lib/money";
 import { variantLabel } from "@/lib/labels";
+import { formatMinor } from "@/lib/money";
 import { one } from "@/lib/pagination";
 import { getSettings } from "@/server/queries";
-import { readCart } from "@/lib/cart";
 
 export const metadata = { title: "السلة" };
 
@@ -49,9 +49,12 @@ export default async function CartPage({
       ) : (
         <div className="grid gap-4">
           {rows.map(({ item, status }) => {
+            const photo = cartLineImage(item.variant);
             return (
-            <article key={item.id} className="card grid min-w-0 gap-3 p-4 md:grid-cols-[4.5rem_1fr_auto] md:items-center">
-              <RosePlate name={item.variant.product.name} className="plate w-full" />
+            <article key={item.id} className="card cart-line">
+              <div className="line-thumb">
+                <PlateImage src={photo?.url ?? null} alt={photo?.alt || item.variant.product.name} bare className="line-thumb-img" />
+              </div>
               <div className="min-w-0">
                 <h2 className="break-words font-bold">{item.variant.product.name}</h2>
                 <p className="text-sm text-muted">{variantLabel(item.variant.shadeName, item.variant.sizeName)}</p>
@@ -62,7 +65,7 @@ export default async function CartPage({
                   </p>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="cart-line-actions">
                 {status.messages.some((message) => message.startsWith("لم يعد")) ? null : (
                   <form action={updateCartAction} className="flex items-center gap-2">
                     <input type="hidden" name="itemId" value={item.id} />

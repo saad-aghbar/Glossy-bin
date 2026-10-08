@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePinnedPopover } from "@/components/controls/use-pinned-popover";
 import { FluidCanvas } from "@/components/fluid-canvas";
 import { logoutAction } from "@/server/actions/account";
 import { AdminIcon } from "./icon";
@@ -27,6 +28,7 @@ function NavMenu({
   const closeTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const fine = useRef(false);
+  usePinnedPopover(open, item);
 
   function showMenu() {
     if (closeTimer.current) window.clearTimeout(closeTimer.current);

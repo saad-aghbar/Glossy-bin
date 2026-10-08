@@ -35,9 +35,6 @@ export default async function ProductPage({
   const back = from.startsWith("/products") && !from.startsWith("//") && !from.includes("://") ? from : "/products";
   return (
     <div className="grid gap-8">
-      <Link className="quiet-link w-fit" href={back}>
-        العودة للنتائج
-      </Link>
       <ProductPurchase
         name={product.name}
         description={product.description}
@@ -46,6 +43,7 @@ export default async function ProductPage({
         images={product.images}
         currency={settings?.currency ?? "SAR"}
         minorUnit={settings?.minorUnit ?? 100}
+        backHref={back}
       />
       {others.length > 0 ? (
         <section className="grid gap-4">
@@ -54,6 +52,7 @@ export default async function ProductPage({
             {others.map((item) => (
               <ProductCard
                 key={item.id}
+                slug={item.slug}
                 href={`/products/${item.slug}`}
                 name={item.name}
                 imageUrl={item.imageUrl}

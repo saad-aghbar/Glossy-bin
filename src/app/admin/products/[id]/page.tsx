@@ -82,7 +82,16 @@ export default async function EditProductPage({
           key={images.map((image) => `${image.id}:${image.sortOrder}`).join("|")}
           productId={current.id}
           productName={current.name}
-          images={images.map((image) => ({ id: image.id, url: image.url, alt: image.alt }))}
+          images={images.map((image) => {
+            const owner = variants.find((variant) => variant.id === image.variantId);
+            const named = owner ? [owner.shadeName, owner.sizeName].filter(Boolean).join(" / ") : "";
+            return {
+              id: image.id,
+              url: image.url,
+              alt: image.alt,
+              variantLabel: named || (owner ? owner.sku : "لكل الخيارات"),
+            };
+          })}
         />
         <BoundForm action={uploadImageAction} submit="رفع الصورة" cancelHref="/admin/products">
           <input type="hidden" name="productId" value={current.id} />
@@ -93,7 +102,10 @@ export default async function EditProductPage({
           </label>
           <label className="grid gap-1">
             الخيار
-            <ChoiceList name="variantId" defaultValue="" placeholder="لكل الخيارات" options={[{ value: "", label: "لكل الخيارات" }, ...variants.map((variant) => ({ value: variant.id, label: variant.sku }))]} />
+            <ChoiceList name="variantId" defaultValue="" placeholder="لكل الخيارات" options={[{ value: "", label: "لكل الخيارات" }, ...variants.map((variant) => {
+              const named = [variant.shadeName, variant.sizeName].filter(Boolean).join(" / ");
+              return { value: variant.id, label: named || variant.sku };
+            })]} />
           </label>
           <div className="grid gap-1">
             الملف
